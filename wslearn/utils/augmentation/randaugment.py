@@ -12,7 +12,6 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 
-
 def AutoContrast(img, _):
     return PIL.ImageOps.autocontrast(img)
 
@@ -45,52 +44,39 @@ def Posterize(img, v):
 def Rotate(img, v):
     return img.rotate(v)
 
-
-
 def Sharpness(img, v):
     assert v >= 0.0
     return PIL.ImageEnhance.Sharpness(img).enhance(v)
 
-
 def ShearX(img, v):
     return img.transform(img.size, PIL.Image.AFFINE, (1, v, 0, 0, 1, 0))
 
-
 def ShearY(img, v):
     return img.transform(img.size, PIL.Image.AFFINE, (1, 0, 0, v, 1, 0))
-
 
 def TranslateX(img, v):
     v = v * img.size[0]
     return img.transform(img.size, PIL.Image.AFFINE, (1, 0, v, 0, 1, 0))
 
-
 def TranslateXabs(img, v):
     return img.transform(img.size, PIL.Image.AFFINE, (1, 0, v, 0, 1, 0))
-
 
 def TranslateY(img, v):
     v = v * img.size[1]
     return img.transform(img.size, PIL.Image.AFFINE, (1, 0, 0, 0, 1, v))
 
-
 def TranslateYabs(img, v):
     return img.transform(img.size, PIL.Image.AFFINE, (1, 0, 0, 0, 1, v))
 
-
-def Solarize(img, v):  # [0, 256]
+def Solarize(img, v):
     assert 0 <= v <= 256
     return PIL.ImageOps.solarize(img, v)
 
-
-def Cutout(img, v):  #[0, 60] => percentage: [0, 0.2] => change to [0, 0.5]
-    assert 0.0 <= v <= 0.5
+def Cutout(img, v):
     if v <= 0.:
         return img
-
     v = v * img.size[0]
     return CutoutAbs(img, v)
-
 
 def CutoutAbs(img, v):  # [0, 60] => percentage: [0, 0.2]
     # assert 0 <= v <= 20
@@ -111,7 +97,6 @@ def CutoutAbs(img, v):  # [0, 60] => percentage: [0, 0.2]
     img = img.copy()
     PIL.ImageDraw.Draw(img).rectangle(xy, color)
     return img
-
 
 def augment_list():
     l = [
@@ -151,7 +136,6 @@ def augment_list_no_color():
     ]
     return l
 
-
 class RandAugment:
     def __init__(self, n, m, exclude_color_aug=False):
         self.n = n
@@ -160,8 +144,6 @@ class RandAugment:
             self.augment_list = augment_list()
         else:
             self.augment_list = augment_list_no_color()
-
-
 
     def __call__(self, img):
         ops = random.choices(self.augment_list, k=self.n)
