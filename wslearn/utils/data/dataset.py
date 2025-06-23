@@ -18,16 +18,14 @@ class BasicDataset(Dataset):
         """
         Returns an item from the dataset
         """
-
         X = self.X[index]
         y = self.y[index] if self.y is not None else None
 
-        if isinstance(X, np.ndarray):
-            X = Image.fromarray(X)
+        out_dict = {"X": X}
+        if y is not None:
+            out_dict["y"] = y
 
-        X= transforms.ToTensor()(X)
-
-        return X, y
+        return out_dict
 
 
 class TransformDataset(Dataset):
