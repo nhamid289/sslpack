@@ -24,8 +24,8 @@ class FixMatch(Algorithm):
             conf_threshold: the confidence threshold for pseudo-labels
             sup_loss_func: a function with signature f(pred, true) to compute
                 the loss on the supervised batch
-            unsup_loss_func: a function with signature f(pred, true) to compute
-                the loss on the unsupervised batch
+            unsup_loss_func: a function with signature f(pred, true, mask) to
+                compute the loss on the unsupervised batch
         """
         super().__init__()
 
@@ -47,14 +47,14 @@ class FixMatch(Algorithm):
 
     def forward(self, model, lbl_batch, ulbl_batch, log_func=None):
         """
-        Proceeds with one iteration of the algorithm and computes the loss
+        Performs a forward pass of FixMatch
 
-        A log_func can be supplied which is called with a dictionary containing
-        all relevant statistics.
-
-        Returns:
-            total_loss: the total loss incurred on both unlabelled and labelled
-                examples
+         Args:
+            model: The predictor model
+            lbl_batch: A dictionary with labelled data using keys "X", "y"
+            ubl_batch: A dictionary with unlabelled data using keys "X", "y"
+            log_func: A function which accepts a dictionary containing some
+                training information
         """
         out_lbl_weak = model(lbl_batch["weak"])
         out_ulbl_strong = model(ulbl_batch["strong"])
