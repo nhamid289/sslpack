@@ -1,5 +1,7 @@
 from torchvision.datasets import CIFAR10, CIFAR100
 from torchvision import transforms
+import torch
+from PIL import Image
 
 from wslearn.datasets import Dataset
 from wslearn.utils.data import TransformDataset , split_lb_ulb_balanced
@@ -59,8 +61,11 @@ class Cifar(Dataset):
     def _get_dataset(self, num_lbl, num_ulbl, seed, data_dir, download):
 
         train = self.cifar(data_dir, train=True, download=download)
-        X, y = train.data, train.targets
-        X_lb, y_lb, X_ulb, y_ulb = split_lb_ulb_balanced(X, y, num_lbl=num_lbl,
+        X_tr, y_tr = train.data, train.targets
+        X_tr = [Image.fromarray(x) for x in X_tr]
+
+        X_lb, y_lb, X_ulb, y_ulb = split_lb_ulb_balanced(X_tr, y_tr,
+                                                         num_lbl=num_lbl,
                                                          num_ulbl=num_ulbl,
                                                          seed=seed)
 
@@ -78,10 +83,10 @@ class Cifar(Dataset):
                                        strong_transform=self.strong_transform)
 
         test = self.cifar(data_dir, train=False, download=download)
+        X_ts, y_ts = test.data, test.targets
+        X_ts = [Image.fromarray(x) for x in X_ts]
 
-        X, y = test.data, test.targets
-        X, y = np.array(X), np.array(y)
-        self.eval_dataset = TransformDataset(X=X, y=y,
+        self.eval_dataset = TransformDataset(X=X_ts, y=y_ts,
                                         weak_transform=self.eval_transform)
 
 class Cifar10(Cifar):

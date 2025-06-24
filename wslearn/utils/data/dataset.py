@@ -1,4 +1,5 @@
 from torch.utils.data import Dataset
+import torch
 from torchvision import transforms
 from PIL import Image
 import numpy as np
@@ -84,9 +85,14 @@ class TransformDataset(Dataset):
         """
         X = self.X[index]
         y = self.y[index] if self.y is not None else None
-        if isinstance(X, np.ndarray):
-            X = Image.fromarray(X)
-        X_orig = transforms.ToTensor()(X)
+
+        # if isinstance(X, np.ndarray):
+        #     X = Image.fromarray(X)
+
+        if not torch.is_tensor(X):
+            X_orig = transforms.ToTensor()(X)
+        else:
+            X_orig = X.clone()
 
         if self.return_X_y is True:
             X_w = self.weak_transform(X) if self.weak_transform is not None else X_orig

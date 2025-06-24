@@ -25,19 +25,13 @@ def split_lb_ulb_balanced(X, y, num_lbl, num_ulbl = None,
             Returns a 4-tuple containing the labelled features and labels,
             and unlabelled features and labels
     """
-
-    # lbls = [] if lbl_idx is None else lbl_idx
-    # ulbls = [] if ulbl_idx is None else ulbl_idx
-    X, y = np.array(X), np.array(y)
     lbls = []
     ulbls = []
     if seed is not None:
         np.random.seed(seed)
 
-    for c in range(len(y)):
-        idx = np.where(y == c)[0]
-    # for label in np.unique(y):
-        # idx = np.where(y == label)[0]
+    for label in np.unique(y):
+        idx = np.where(y == label)[0]
         np.random.shuffle(idx)
         # take the first num_lbl from shuffled indices
         lbls.extend(idx[:num_lbl])
@@ -49,8 +43,5 @@ def split_lb_ulb_balanced(X, y, num_lbl, num_ulbl = None,
     if return_idx:
         return lbls, ulbls
 
-    return X[lbls], y[lbls], X[ulbls], y[ulbls]
-
-def split_lb_ulb_imbalanced():
-    pass
-
+    return ([X[i] for i in lbls], [y[i] for i in lbls],
+            [X[i] for i in ulbls], [X[i] for i in ulbls])
