@@ -20,5 +20,5 @@ pip install .
 
 ## Usage
 
-`wslearn` is designed for making scripts that look like conventional Pytorch scripts. The key components such as the model, dataloader, optimiser are all modular. See the examples available in [Examples]()
+`wslearn` is designed for making scripts that look like conventional Pytorch scripts. The key components such as the model, dataloader, optimiser are all modular. See the examples available in [Examples](https://github.com/nhamid289/wslearn/tree/main/examples)
 
