@@ -1,8 +1,8 @@
 from torch.utils.data import Dataset
 import torch
 from torchvision import transforms
-from PIL import Image
 import numpy as np
+
 
 class BasicDataset(Dataset):
     def __init__(self, X, y=None):
@@ -63,13 +63,11 @@ class TransformDataset(Dataset):
         self.medium_transform = medium_transform
         self.strong_transform = strong_transform
 
-
     def __len__(self):
         """
         Return the number of elements in the dataset
         """
         return(len(self.X))
-
 
     def __getitem__(self, index):
         """
@@ -85,9 +83,6 @@ class TransformDataset(Dataset):
         """
         X = self.X[index]
         y = self.y[index] if self.y is not None else None
-
-        # if isinstance(X, np.ndarray):
-        #     X = Image.fromarray(X)
 
         if not torch.is_tensor(X):
             X_orig = transforms.ToTensor()(X)
