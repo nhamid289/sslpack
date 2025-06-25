@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wslearn"
+version = "0.1.0"
+description = "A weakly-supervised learning library"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+  {name = "Nazeef Hamid", email = "nazeef.h.289@gmail.com"},
+  {name = "Nan Ye", email = "nan.ye@uq.edu.au"},
+  {name = "Jonathan Wilton", email = "jonathan.wilton@uq.edu.au"}
+]
+keywords = ["pytorch", "semi-supervised-learning", "weakly-supervised-learning"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent"
+]
+dependencies = [
+  "numpy>=2.2.6",
+  "pillow>=11.2.1",
+  "sympy>=1.14.0",
+  "torch>=2.7.1",
+  "torchvision>=0.22.1",
+  "triton>=3.3.1",
+  "scikit-learn>=1.7.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/nhamid289/wslearn"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = ["test"]
