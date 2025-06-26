@@ -11,7 +11,7 @@ import numpy as np
 
 class Cifar(Dataset):
 
-    def __init__(self, cifar, data_dir, num_lbl=4, num_ulbl=None, seed=None,
+    def __init__(self, cifar, data_dir, lbls_per_class=4, ulbls_per_class=None, seed=None,
                  crop_size=32, crop_ratio=1, download=True,
                  return_ulbl_labels=False):
 
@@ -20,7 +20,7 @@ class Cifar(Dataset):
 
         self._define_transforms(crop_size, crop_ratio)
 
-        self._get_dataset(num_lbl, num_ulbl, seed, data_dir, download)
+        self._get_dataset(lbls_per_class, ulbls_per_class, seed, data_dir, download)
 
     def _define_transforms(self, crop_size, crop_ratio):
 
@@ -58,15 +58,15 @@ class Cifar(Dataset):
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
 
-    def _get_dataset(self, num_lbl, num_ulbl, seed, data_dir, download):
+    def _get_dataset(self, lbls_per_class, ulbls_per_class, seed, data_dir, download):
 
         train = self.cifar(data_dir, train=True, download=download)
         X_tr, y_tr = train.data, train.targets
         X_tr = [Image.fromarray(x) for x in X_tr]
 
         X_lb, y_lb, X_ulb, y_ulb = split_lb_ulb_balanced(X_tr, y_tr,
-                                                         num_lbl=num_lbl,
-                                                         num_ulbl=num_ulbl,
+                                                         lbls_per_class=lbls_per_class,
+                                                         ulbls_per_class=ulbls_per_class,
                                                          seed=seed)
 
         if self.return_ulbl_labels is False:
@@ -90,15 +90,15 @@ class Cifar(Dataset):
                                         weak_transform=self.eval_transform)
 
 class Cifar10(Cifar):
-    def __init__(self, num_lbl=4, num_ulbl=None, seed=None,
+    def __init__(self, lbls_per_class=4, ulbls_per_class=None, seed=None,
                     crop_size=32, crop_ratio=1,
                     data_dir = "~/.wslearn/datasets/CIFAR10", download=True):
-        super().__init__(CIFAR10, data_dir, num_lbl, num_ulbl, seed,
+        super().__init__(CIFAR10, data_dir, lbls_per_class, ulbls_per_class, seed,
                          crop_size, crop_ratio, download)
 
 class Cifar100(Cifar):
-    def __init__(self, num_lbl=4, num_ulbl=None, seed=None,
+    def __init__(self, lbls_per_class=4, ulbls_per_class=None, seed=None,
                     crop_size=32, crop_ratio=1,
                     data_dir = "~/.wslearn/datasets/CIFAR100", download=True):
-        super().__init__(CIFAR100, data_dir, num_lbl, num_ulbl, seed,
+        super().__init__(CIFAR100, data_dir, lbls_per_class, ulbls_per_class, seed,
                          crop_size, crop_ratio, download)

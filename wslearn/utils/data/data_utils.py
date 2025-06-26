@@ -1,6 +1,6 @@
 import numpy as np
 
-def split_lb_ulb_balanced(X, y, num_lbl, num_ulbl = None,
+def split_lb_ulb_balanced(X, y, lbls_per_class, ulbls_per_class = None,
                  lbl_idx=None, ulbl_idx=None, lbl_in_ulbl=True,
                  return_idx = False, seed=None):
     """
@@ -10,9 +10,8 @@ def split_lb_ulb_balanced(X, y, num_lbl, num_ulbl = None,
     Args:
         X: the features
         y: the labels
-        num_classes: The number of target classes
-        num_lbl: The number of samples per class to be labelled
-        num_ulbl: The number of samples per class to be unlabelled.
+        lbls_per_class: The number of samples per class to be labelled
+        ulbls_per_class: The number of samples per class to be unlabelled.
             If left unspecified, all remaining unlabelled data is taken
         lbl_idx: The specific indices to include in labelled data.
         ulbl_indx: The specific indices to include in unlabelled data.
@@ -33,15 +32,15 @@ def split_lb_ulb_balanced(X, y, num_lbl, num_ulbl = None,
     for label in np.unique(y):
         idx = np.where(y == label)[0]
         np.random.shuffle(idx)
-        # take the first num_lbl from shuffled indices
-        lbls.extend(idx[:num_lbl])
-        if num_ulbl is None:
-            ulbls.extend(idx[num_lbl:])
+        # take the first lbls_per_class from shuffled indices
+        lbls.extend(idx[:lbls_per_class])
+        if ulbls_per_class is None:
+            ulbls.extend(idx[lbls_per_class:])
         else:
-            ulbls.extend(idx[num_lbl: num_lbl + num_ulbl])
+            ulbls.extend(idx[lbls_per_class: lbls_per_class + ulbls_per_class])
 
     if return_idx:
         return lbls, ulbls
 
     return ([X[i] for i in lbls], [y[i] for i in lbls],
-            [X[i] for i in ulbls], [X[i] for i in ulbls])
+            [X[i] for i in ulbls], [y[i] for i in ulbls])
