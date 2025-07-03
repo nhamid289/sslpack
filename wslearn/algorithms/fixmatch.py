@@ -83,15 +83,16 @@ class FixMatch(Algorithm):
 
         unsup_loss = self.unsup_loss_func(out_ulbl_strong, pseudo_labels, mask)
 
-        total_loss = (1 - self.lambda_u) * sup_loss + self.lambda_u * unsup_loss
+        total_loss = sup_loss + self.lambda_u * unsup_loss
 
         if log_func is not None:
             log_func({
-                "sup_loss": sup_loss,
-                "unsup_loss": unsup_loss,
-                "total_loss": total_loss,
-                "mask": mask,
-                "pseudo_labels": pseudo_labels
+                "sup_loss": sup_loss.item(),
+                "unsup_loss": unsup_loss.item(),
+                "total_loss": total_loss.item(),
+                "confidences": confidences.detach(),
+                "pseudo_labels": pseudo_labels.detach(),
+                "mask": mask.detach()
             })
 
         return total_loss
