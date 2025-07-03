@@ -5,9 +5,10 @@ import numpy as np
 
 
 class BasicDataset(Dataset):
-    def __init__(self, X, y=None):
+    def __init__(self, X, y=None, transform=None):
         self.X = X
         self.y = y
+        self.transform = transform
 
     def __len__(self):
         """
@@ -22,7 +23,11 @@ class BasicDataset(Dataset):
         X = self.X[index]
         y = self.y[index] if self.y is not None else None
 
-        out_dict = {"X": X}
+        if self.transform is not None:
+            out_dict = {"X": self.transform(X)}
+        else:
+            out_dict = {"X": X}
+
         if y is not None:
             out_dict["y"] = y
 
@@ -33,7 +38,7 @@ class TransformDataset(Dataset):
     """
     A class to store a dataset and apply any transformations to the data
     """
-    def __init__(self, X, y=None, weak_transform=None, medium_transform=None,
+    def __init__(self, X, y=None, transform= None, weak_transform=None,
                  strong_transform=None, return_X_y=False):
         """
         Initialise an WSL dataset. This can be either a labelled or unlabelled
@@ -59,8 +64,8 @@ class TransformDataset(Dataset):
         self.y = y
         self.return_X_y = return_X_y
 
+        self.transform = transform
         self.weak_transform = weak_transform
-        self.medium_transform = medium_transform
         self.strong_transform = strong_transform
 
     def __len__(self):
@@ -84,27 +89,23 @@ class TransformDataset(Dataset):
         X = self.X[index]
         y = self.y[index] if self.y is not None else None
 
-        if not torch.is_tensor(X):
-            X_orig = transforms.ToTensor()(X)
-        else:
-            X_orig = X.clone()
-
         if self.return_X_y is True:
-            X_w = self.weak_transform(X) if self.weak_transform is not None else X_orig
-            X_m = self.medium_transform(X) if self.medium_transform is not None else X_orig
-            X_s = self.strong_transform(X) if self.strong_transform is not None else X_orig
+            X_t = self.transform(X) if self.transform is not None else X
+            X_w = self.weak_transform(X) if self.weak_transform is not None else X_t
+            X_s = self.strong_transform(X) if self.strong_transform is not None else X_t
+            return X_t, X_w, X_s, y
 
-            return X_orig, X_w, X_m, X_s, y
-
-        out_dict = {"X": X_orig}
+        out_dict = {}
         if y is not None:
             out_dict["y"] = y
         if self.weak_transform is not None:
             out_dict["weak"] = self.weak_transform(X)
-        if self.medium_transform is not None:
-            out_dict["medium"] = self.medium_transform(X)
         if self.strong_transform is not None:
             out_dict["strong"] = self.strong_transform(X)
+        if self.transform is not None:
+            out_dict["X"] = self.transform(X)
+        else:
+            out_dict["X"] = X
 
         return out_dict
 
