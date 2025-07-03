@@ -370,6 +370,13 @@ class ViT_Tiny_2(VisionTransformer):
     """
 
     def __init__(self, image_size, in_channels, num_classes, **kwargs):
+        """ Initialise a ViT-Tiny
+
+        Args:
+            image_size: The length/width of the image (assumes square images)
+            in_channels: The number of input channels
+            num_classes: The number of classes in the output layer
+        """
         super().__init__(img_size=image_size,
                          in_channels=in_channels,
                          num_classes=num_classes,
@@ -386,6 +393,13 @@ class ViT_Small_2(VisionTransformer):
     """
 
     def __init__(self, image_size, in_channels, num_classes, **kwargs):
+        """ Initialise a ViT-Small
+
+        Args:
+            image_size: The length/width of the image (assumes square images)
+            in_channels: The number of input channels
+            num_classes: The number of classes in the output layer
+        """
         super().__init__(img_size=image_size,
                          in_channels=in_channels,
                          num_classes=num_classes,
@@ -402,6 +416,13 @@ class ViT_Base_16(VisionTransformer):
     """
 
     def __init__(self, image_size, in_channels, num_classes, **kwargs):
+        """ Initialise a ViT-Base
+
+        Args:
+            image_size: The length/width of the image (assumes square images)
+            in_channels: The number of input channels
+            num_classes: The number of classes in the output layer
+        """
         super().__init__(img_size=image_size,
                          in_channels=in_channels,
                          num_classes=num_classes,
