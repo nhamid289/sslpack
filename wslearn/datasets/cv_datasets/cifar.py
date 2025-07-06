@@ -80,15 +80,45 @@ class Cifar(Dataset):
         self.eval_dataset = BasicDataset(X=X_ts, y=y_ts, transform=self.transform)
 
 class Cifar10(Cifar):
+    """
+    A Cifar10 semi supervised learning dataset with transformations
+    """
     def __init__(self, lbls_per_class=4, ulbls_per_class=None, seed=None,
-                    crop_size=32, crop_ratio=1,
+                    crop_size=32, crop_ratio=1, return_ulb_labels=False,
                     data_dir = "~/.wslearn/datasets/CIFAR10", download=True):
+        """
+
+        Args:
+            lbls_per_class: The number of labelled observations to include per class
+            ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
+            seed: The seed for randomly choosing the labelled instances
+            crop_size: The length/width of crop size for resizing (square) during augmentations
+            crop_ratio: The crop ratio used for padding when cropping during augmentations
+            return_ulb_labels: If true, the labels for the unlabelled data are included
+            data_dir: The directory to save the dataset
+            download: If true, the dataset is downloaded if it does not already exist
+        """
         super().__init__(CIFAR10, data_dir, lbls_per_class, ulbls_per_class, seed,
-                         crop_size, crop_ratio, download)
+                         crop_size, crop_ratio, download, return_ulb_labels)
 
 class Cifar100(Cifar):
+    """
+    A Cifar100 semi supervised learning dataset with transformations
+    """
     def __init__(self, lbls_per_class=4, ulbls_per_class=None, seed=None,
-                    crop_size=32, crop_ratio=1,
+                    crop_size=32, crop_ratio=1, return_ulbl_labels=False,
                     data_dir = "~/.wslearn/datasets/CIFAR100", download=True):
+        """
+
+        Args:
+            lbls_per_class: The number of labelled observations to include per class
+            ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
+            seed: The seed for randomly choosing the labelled instances
+            crop_size: The length/width of crop size for resizing (square) during augmentations
+            crop_ratio: The crop ratio used for padding when cropping during augmentations
+            return_ulb_labels: If true, the labels for the unlabelled data are included
+            data_dir: The directory to save the dataset
+            download: If true, the dataset is downloaded if it does not already exist
+        """
         super().__init__(CIFAR100, data_dir, lbls_per_class, ulbls_per_class, seed,
-                         crop_size, crop_ratio, download)
+                         crop_size, crop_ratio, download, return_ulbl_labels)

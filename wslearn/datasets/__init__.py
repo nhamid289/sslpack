@@ -6,7 +6,7 @@ from .dataset import Dataset
 
 
 from wslearn.datasets.cv_datasets import (
-    Cifar10, Cifar100
+    Cifar10, Cifar100, Mnist
 )
 
 
