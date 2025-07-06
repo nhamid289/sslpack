@@ -1,9 +1,10 @@
+import torch
+
 class EMA:
     """
     An implementation of EMA for parameter smoothing during training.
     Implementation from https://fyubang.com/2019/06/01/ema/
     """
-
     def __init__(self, model, decay=0.999):
         self.model = model
         self.decay = decay
@@ -51,12 +52,14 @@ class EMA:
             param.data = self.backup[name].clone().to(self.device)
         self.backup = {}
 
-    def load_model(self, ema_model):
-        """
-        Load parameters from another model. Replaces the existing parameters
-        """
-        for name, param in ema_model.named_parameters():
-            self.shadow[name] = param.data.clone().to(self.device)
+    def load_shadow(self, shadow:dict):
+        self.shadow = shadow
+
+    def save(self, save_dir):
+        torch.save(self.shadow, save_dir)
+
+    def load(self, save_dir):
+        self.shadow = torch.load(save_dir)
 
 
 
