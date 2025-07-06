@@ -11,8 +11,8 @@ class FixMatch(Algorithm):
     and cross entropy consistency loss for the unsupervised part.
     """
 
-    def __init__(self, lambda_u=0.5,  conf_threshold=0.95,
-                 max_pseudo_labels = None, sup_loss_func=None,
+    def __init__(self, lambda_u=7, conf_threshold=0.95,
+                 max_pseudo_labels=None, sup_loss_func=None,
                  unsup_loss_func=None):
         """
         Initialise a fixmatch algorithm.
@@ -90,9 +90,9 @@ class FixMatch(Algorithm):
                 "sup_loss": sup_loss.item(),
                 "unsup_loss": unsup_loss.item(),
                 "total_loss": total_loss.item(),
-                "confidences": confidences.detach(),
-                "pseudo_labels": pseudo_labels.detach(),
-                "mask": mask.detach()
+                "confidences": confidences.detach().cpu(),
+                "pseudo_labels": pseudo_labels.detach().cpu(),
+                "mask": mask.detach().cpu()
             })
 
         return total_loss
