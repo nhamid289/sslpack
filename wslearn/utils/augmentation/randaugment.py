@@ -135,9 +135,10 @@ def augment_list_no_color():
     return l
 
 class RandAugment:
-    def __init__(self, n, m, exclude_color_aug=False):
+    def __init__(self, n, m, exclude_color_aug=False, bw=False):
         self.n = n
-        self.m = m      # [0, 30] in fixmatch, deprecated.
+        self.m = m
+        self.bw = bw
         if not exclude_color_aug:
             self.augment_list = augment_list()
         else:
@@ -148,8 +149,12 @@ class RandAugment:
         for op, min_val, max_val in ops:
             val = min_val + float(max_val - min_val)*random.random()
             img = op(img, val)
+        if self.bw is True:
+            return img
+
         cutout_val = random.random() * 0.5
-        img = Cutout(img, cutout_val) #for fixmatch
-        return img
+        return Cutout(img, cutout_val) #for fixmatch
+
+
 
 

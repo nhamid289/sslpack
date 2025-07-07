@@ -3,11 +3,12 @@ from torchvision.datasets import MNIST as MN
 from torchvision import transforms
 from wslearn.utils.data import TransformDataset, BasicDataset
 from wslearn.utils.data import split_lb_ulb_balanced
+from wslearn.utils.augmentation import RandAugment
 
 class Mnist(Dataset):
 
     def __init__(self, lbls_per_class, ulbls_per_class=None, seed=None,
-                 return_ulbl_labels=False,
+                 return_ulbl_labels=False, crop_size=28, crop_ratio=1,
                  data_dir = "~/.wslearn/datasets/MNIST", download=True):
 
         mnist_tr = MN(root=data_dir, train=True, download=download)
@@ -21,19 +22,24 @@ class Mnist(Dataset):
 
         self.weak_transform = transforms.Compose([
             transforms.ToPILImage(),
+            transforms.Resize(crop_size),
+            transforms.RandomCrop(crop_size, padding=int(crop_size * (1 - crop_ratio)), padding_mode='reflect'),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(X_tr.mean(), X_tr.std())
         ])
         self.strong_transform = transforms.Compose([
             transforms.ToPILImage(),
+            transforms.Resize(crop_size),
+            transforms.RandomCrop(crop_size, padding=int(crop_size * (1 - crop_ratio)), padding_mode='reflect'),
             transforms.RandomHorizontalFlip(),
-            transforms.RandAugment(3, 5),
+            RandAugment(3, 5, exclude_color_aug=True, bw=True),
             transforms.ToTensor(),
             transforms.Normalize(X_tr.mean(), X_tr.std())
         ])
 
         self.transform = transforms.Compose([
+            transforms.Resize(crop_size),
             transforms.Normalize(X_tr.mean(), X_tr.std())
         ])
 
