@@ -62,4 +62,34 @@ class EMA:
         self.shadow = torch.load(save_dir)
 
 
+class AdjustedEMA(EMA):
+    """
+    Adjusted EMA formula by Dániel Terbe
+    Available at: https://terbe.dev/blog/posts/exponentially-weighted-moving-average.
+    """
+
+    def __init__(self, model, decay=0.999):
+        self.v = {}
+        self.u = {}
+        super().__init__(model, decay)
+
+    def initialise(self):
+        super().initialise()
+        for name, param in self.model.named_parameters():
+            self.v[name] = 1
+            self.u[name] = param.data.clone().to(self.device)
+
+    def update(self):
+        """
+        Update the smoothed parameters.
+        """
+        for name, param in self.model.named_parameters():
+
+            self.v[name] = 1 + (1 - self.decay) * self.v[name]
+            self.u[name] = param.data + (1 - self.decay) * self.u[name]
+            self.shadow[name] = (self.u[name]/self.v[name]).clone().to(self.device)
+
+        for name, buffer in self.model.named_buffers():
+            self.shadow[name] = buffer.clone().to(self.device)
+
 
