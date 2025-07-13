@@ -11,8 +11,6 @@ from torch.hub import load_state_dict_from_url
 from timm.layers import DropPath
 from timm.layers.helpers import to_2tuple
 
-from wslearn.networks.utils import load_checkpoint
-
 
 class _PatchEmbed(nn.Module):
     """
@@ -369,7 +367,7 @@ class ViT_Tiny_2(VisionTransformer):
     """ ViT-Tiny
     """
 
-    def __init__(self, image_size, in_channels, num_classes, **kwargs):
+    def __init__(self, image_size, in_channels, num_classes, pretrained=False, **kwargs):
         """ Initialise a ViT-Tiny
 
         Args:
@@ -387,12 +385,15 @@ class ViT_Tiny_2(VisionTransformer):
                          drop_path_rate=0.1,
                          **kwargs)
 
+        if pretrained is True:
+            self.load_checkpoint("https://github.com/microsoft/Semi-supervised-learning/releases/download/v.0.0.0/vit_tiny_patch2_32_mlp_im_1k_32.pth")
+
 
 class ViT_Small_2(VisionTransformer):
     """ ViT-Small
     """
 
-    def __init__(self, image_size, in_channels, num_classes, **kwargs):
+    def __init__(self, image_size, in_channels, num_classes, pretrained=False, **kwargs):
         """ Initialise a ViT-Small
 
         Args:
@@ -409,7 +410,8 @@ class ViT_Small_2(VisionTransformer):
                          num_heads=6,
                          drop_path_rate=0.2,
                          **kwargs)
-
+        if pretrained is True:
+            self.load_checkpoint("https://github.com/microsoft/Semi-supervised-learning/releases/download/v.0.0.0/vit_small_patch2_32_mlp_im_1k_32.pth")
 
 class ViT_Base_16(VisionTransformer):
     """ ViT-Base  from original paper (https://arxiv.org/abs/2010.11929).
