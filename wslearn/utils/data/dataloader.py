@@ -31,9 +31,9 @@ class MinimumLoader(WeaklySupervisedLoader):
         self.ulbl_dataset = ulbl_dataset
 
         self.lbl_loader = DataLoader(lbl_dataset, batch_size=lbl_batch_size,
-                                     shuffle=shuffle_lbl, num_workers=num_workers)
+                                     shuffle=shuffle_lbl, num_workers=min(1, num_workers))
         self.ulbl_loader = DataLoader(ulbl_dataset, batch_size=ulbl_batch_size,
-                                      shuffle=shuffle_ulbl, num_workers=num_workers)
+                                      shuffle=shuffle_ulbl, num_workers=max(num_workers-1, 0))
 
     def __iter__(self):
         self.lbl_iter = iter(self.lbl_loader)
@@ -64,9 +64,9 @@ class CyclicLoader(WeaklySupervisedLoader):
         self.ulbl_dataset = ulbl_dataset
 
         self.lbl_loader = DataLoader(lbl_dataset, batch_size=lbl_batch_size,
-                                     shuffle=shuffle_lbl, num_workers=num_workers)
+                                     shuffle=shuffle_lbl, num_workers=min(1, num_workers))
         self.ulbl_loader = DataLoader(ulbl_dataset, batch_size=ulbl_batch_size,
-                                      shuffle=shuffle_ulbl, num_workers=num_workers)
+                                      shuffle=shuffle_ulbl, num_workers=max(num_workers-1, 0))
 
         self.lbl_iter = iter(self.lbl_loader)
         self.ulbl_iter = iter(self.ulbl_loader)
