@@ -1,25 +1,18 @@
-from wslearn.algorithms import Algorithm
-from wslearn.utils.criterions import ce_consistency_loss
+from sslpack.algorithms import Algorithm
+from sslpack.utils.criterions import ce_consistency_loss
 
 import torch
 import torch.nn.functional as F
 
 from .utils import _threshold_mask
 
-
 class PseudoLabel(Algorithm):
     """
     An implementation of PseudoLabel algorithm for weakly supervised training.
     """
 
-    def __init__(
-        self,
-        lambda_u=1,
-        conf_threshold=0.95,
-        max_pseudo_labels=None,
-        sup_loss_func=None,
-        unsup_loss_func=None,
-    ):
+    def __init__(self, lambda_u=1, conf_threshold=0.95, max_pseudo_labels=None,
+                 sup_loss_func=None, unsup_loss_func=None):
         """
         Initialise a PseudoLabel algorithm
 
@@ -66,46 +59,28 @@ class PseudoLabel(Algorithm):
         x_ulbl = ulbl_batch["X"]
 
         # generate pseudo-labels
-
-        confs, pseudo_labels, mask = _threshold_mask(
-            model, x_ulbl, self.conf_threshold, self.max_pseudo_labels
-        )
-
-        # confs, pseudo_labels, mask = _mask(model, conf_threshol, max_pseudo_labels)
-        # with torch.no_grad():
-        #     logits = model(x_ulbl)
-        #     probs = torch.softmax(logits, dim=1)
-        #     confidences, pseudo_labels = torch.max(probs, dim=1)
-        #     mask = confidences.ge(self.conf_threshold)
-        #     if self.max_pseudo_labels is not None:
-        #         _, indices = torch.topk(confidences,
-        #                                 min(self.max_pseudo_labels,
-        #                                     len(confidences)))
-        #         keep = torch.zeros_like(mask, dtype=torch.bool)
-        #         keep[indices] = True
-        #         mask &= keep
+        confs, pseudo_labels, mask = _threshold_mask(model,
+                                                     x_ulbl,
+                                                     self.conf_threshold,
+                                                     self.max_pseudo_labels)
 
         x = torch.concat([x_lbl, x_ulbl])
         out = model(x)
-        out_lbl = out[: x_lbl.size(0)]
-        out_ulbl = out[x_lbl.size(0) :]
+        out_lbl = out[:x_lbl.size(0)]
+        out_ulbl = out[x_lbl.size(0):]
 
         sup_loss = self.sup_loss_func(out_lbl, lbl_batch["y"])
-
         unsup_loss = self.unsup_loss_func(out_ulbl, pseudo_labels, mask)
-
         total_loss = sup_loss + self.lambda_u * unsup_loss
 
         if log_func is not None:
-            log_func(
-                {
-                    "sup_loss": sup_loss.item(),
-                    "unsup_loss": unsup_loss.item(),
-                    "total_loss": total_loss.item(),
-                    "confidences": confs.detach().cpu(),
-                    "pseudo_labels": pseudo_labels.detach().cpu(),
-                    "mask": mask.detach().cpu(),
-                }
-            )
+            log_func({
+                "sup_loss": sup_loss.item(),
+                "unsup_loss": unsup_loss.item(),
+                "total_loss": total_loss.item(),
+                "confidences": confs.detach().cpu(),
+                "pseudo_labels": pseudo_labels.detach().cpu(),
+                "mask": mask.detach().cpu()
+            })
 
         return total_loss

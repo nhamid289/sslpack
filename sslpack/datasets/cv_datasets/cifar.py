@@ -3,9 +3,9 @@ from torchvision import transforms
 import torch
 from PIL import Image
 
-from wslearn.datasets import Dataset
-from wslearn.utils.data import TransformDataset, BasicDataset, split_lb_ulb_balanced
-from wslearn.utils.augmentation import RandAugment
+from sslpack.datasets import Dataset
+from sslpack.utils.data import TransformDataset, BasicDataset, split_lb_ulb_balanced
+from sslpack.utils.augmentation import RandAugment
 
 import numpy as np
 
@@ -124,7 +124,7 @@ class Cifar10(Cifar):
         crop_size=32,
         crop_ratio=1,
         return_ulb_labels=False,
-        data_dir="~/.wslearn/datasets/CIFAR10",
+        data_dir="~/.sslpack/datasets/CIFAR10",
         download=True,
     ):
         """
@@ -165,7 +165,7 @@ class Cifar100(Cifar):
         crop_size=32,
         crop_ratio=1,
         return_ulbl_labels=False,
-        data_dir="~/.wslearn/datasets/CIFAR100",
+        data_dir="~/.sslpack/datasets/CIFAR100",
         download=True,
     ):
         """

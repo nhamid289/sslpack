@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "wslearn"
+name = "sslpack"
 version = "0.1.0"
-description = "A weakly-supervised learning library"
+description = "A semi-supervised learning library"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -31,7 +31,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/nhamid289/wslearn"
+Homepage = "https://github.com/nhamid289/sslpack"
 
 [tool.setuptools]
 include-package-data = true

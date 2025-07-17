@@ -1,9 +1,9 @@
-from wslearn.datasets import Dataset
+from sslpack.datasets import Dataset
 from torchvision.datasets import MNIST as MN
 from torchvision import transforms
-from wslearn.utils.data import TransformDataset, BasicDataset
-from wslearn.utils.data import split_lb_ulb_balanced
-from wslearn.utils.augmentation import RandAugment
+from sslpack.utils.data import TransformDataset, BasicDataset
+from sslpack.utils.data import split_lb_ulb_balanced
+from sslpack.utils.augmentation import RandAugment
 
 
 class Mnist(Dataset):
@@ -16,7 +16,7 @@ class Mnist(Dataset):
         return_ulbl_labels=False,
         crop_size=28,
         crop_ratio=1,
-        data_dir="~/.wslearn/datasets/MNIST",
+        data_dir="~/.sslpack/datasets/MNIST",
         download=True,
     ):
 
