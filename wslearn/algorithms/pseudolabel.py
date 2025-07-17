@@ -6,13 +6,20 @@ import torch.nn.functional as F
 
 from .utils import _threshold_mask
 
+
 class PseudoLabel(Algorithm):
     """
     An implementation of PseudoLabel algorithm for weakly supervised training.
     """
 
-    def __init__(self, lambda_u=1, conf_threshold=0.95, max_pseudo_labels=None,
-                 sup_loss_func=None, unsup_loss_func=None):
+    def __init__(
+        self,
+        lambda_u=1,
+        conf_threshold=0.95,
+        max_pseudo_labels=None,
+        sup_loss_func=None,
+        unsup_loss_func=None,
+    ):
         """
         Initialise a PseudoLabel algorithm
 
@@ -60,10 +67,9 @@ class PseudoLabel(Algorithm):
 
         # generate pseudo-labels
 
-        confs, pseudo_labels, mask = _threshold_mask(model,
-                                                     x_ulbl,
-                                                     self.conf_threshold,
-                                                     self.max_pseudo_labels)
+        confs, pseudo_labels, mask = _threshold_mask(
+            model, x_ulbl, self.conf_threshold, self.max_pseudo_labels
+        )
 
         # confs, pseudo_labels, mask = _mask(model, conf_threshol, max_pseudo_labels)
         # with torch.no_grad():
@@ -81,8 +87,8 @@ class PseudoLabel(Algorithm):
 
         x = torch.concat([x_lbl, x_ulbl])
         out = model(x)
-        out_lbl = out[:x_lbl.size(0)]
-        out_ulbl = out[x_lbl.size(0):]
+        out_lbl = out[: x_lbl.size(0)]
+        out_ulbl = out[x_lbl.size(0) :]
 
         sup_loss = self.sup_loss_func(out_lbl, lbl_batch["y"])
 
@@ -91,13 +97,15 @@ class PseudoLabel(Algorithm):
         total_loss = sup_loss + self.lambda_u * unsup_loss
 
         if log_func is not None:
-            log_func({
-                "sup_loss": sup_loss.item(),
-                "unsup_loss": unsup_loss.item(),
-                "total_loss": total_loss.item(),
-                "confidences": confs.detach().cpu(),
-                "pseudo_labels": pseudo_labels.detach().cpu(),
-                "mask": mask.detach().cpu()
-            })
+            log_func(
+                {
+                    "sup_loss": sup_loss.item(),
+                    "unsup_loss": unsup_loss.item(),
+                    "total_loss": total_loss.item(),
+                    "confidences": confs.detach().cpu(),
+                    "pseudo_labels": pseudo_labels.detach().cpu(),
+                    "mask": mask.detach().cpu(),
+                }
+            )
 
         return total_loss

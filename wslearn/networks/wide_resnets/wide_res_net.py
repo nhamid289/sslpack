@@ -1,4 +1,3 @@
-
 # This implementation is modified from https://github.com/microsoft/Semi-supervised-learning
 import torch
 import torch.nn as nn
@@ -9,40 +8,39 @@ class _BasicBlock(nn.Module):
     """
     A ResNet basic block
     """
-    def __init__(self,
-                 in_planes,
-                 out_planes,
-                 stride,
-                 drop_rate=0.0,
-                 momentum=0.001,
-                 activate_before_residual=False):
+
+    def __init__(
+        self,
+        in_planes,
+        out_planes,
+        stride,
+        drop_rate=0.0,
+        momentum=0.001,
+        activate_before_residual=False,
+    ):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(in_planes, momentum=momentum)
         self.relu1 = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        self.conv1 = nn.Conv2d(in_planes,
-                               out_planes,
-                               kernel_size=3,
-                               stride=stride,
-                               padding=1,
-                               bias=False)
+        self.conv1 = nn.Conv2d(
+            in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False
+        )
         self.bn2 = nn.BatchNorm2d(out_planes, momentum=momentum)
         self.relu2 = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        self.conv2 = nn.Conv2d(out_planes,
-                               out_planes,
-                               kernel_size=3,
-                               stride=1,
-                               padding=1,
-                               bias=False)
+        self.conv2 = nn.Conv2d(
+            out_planes, out_planes, kernel_size=3, stride=1, padding=1, bias=False
+        )
         self.drop_rate = drop_rate
-        self.equal_in_out = (in_planes == out_planes)
+        self.equal_in_out = in_planes == out_planes
 
         if not self.equal_in_out:
-            self.conv_shortcut = nn.Conv2d(in_planes,
-                                           out_planes,
-                                           kernel_size=1,
-                                           stride=stride,
-                                           padding=0,
-                                           bias=False)
+            self.conv_shortcut = nn.Conv2d(
+                in_planes,
+                out_planes,
+                kernel_size=1,
+                stride=stride,
+                padding=0,
+                bias=False,
+            )
         else:
             self.conv_shortcut = None
 
@@ -66,29 +64,35 @@ class _BasicBlock(nn.Module):
             return torch.add(x, out)
         return torch.add(self.conv_shortcut(x), out)
 
+
 class _NetworkBlock(nn.Module):
     """
     A group of ResNet Basic blocks
     """
-    def __init__(self,
-                 nb_layers,
-                 in_planes,
-                 out_planes,
-                 stride,
-                 drop_rate=0.0,
-                 momentum=0.001,
-                 activate_before_residual=False):
+
+    def __init__(
+        self,
+        nb_layers,
+        in_planes,
+        out_planes,
+        stride,
+        drop_rate=0.0,
+        momentum=0.001,
+        activate_before_residual=False,
+    ):
         super().__init__()
         layers = []
         for i in range(int(nb_layers)):
             layers.append(
-                _BasicBlock(in_planes=in_planes if i == 0 else out_planes,
-                            out_planes=out_planes,
-                            stride=stride if i == 0 else 1,
-                            drop_rate=drop_rate,
-                            momentum=momentum,
-                            activate_before_residual=activate_before_residual)
-                            )
+                _BasicBlock(
+                    in_planes=in_planes if i == 0 else out_planes,
+                    out_planes=out_planes,
+                    stride=stride if i == 0 else 1,
+                    drop_rate=drop_rate,
+                    momentum=momentum,
+                    activate_before_residual=activate_before_residual,
+                )
+            )
         self.layer = nn.Sequential(*layers)
 
     def forward(self, x):
@@ -108,38 +112,39 @@ class _WideResNet(nn.Module):
         momentum=0.001,
     ):
         super().__init__()
-        channels = [
-            16, 16 * widen_factor, 32 * widen_factor, 64 * widen_factor
-        ]
-        assert ((depth - 4) % 6 == 0)
+        channels = [16, 16 * widen_factor, 32 * widen_factor, 64 * widen_factor]
+        assert (depth - 4) % 6 == 0
         n = (depth - 4) // 6
-        self.conv1 = nn.Conv2d(in_channels,
-                               channels[0],
-                               kernel_size=3,
-                               stride=1,
-                               padding=1,
-                               bias=True)
-        self.block1 = _NetworkBlock(nb_layers=n,
-                                    in_planes=channels[0],
-                                    out_planes=channels[1],
-                                    stride=first_stride,
-                                    drop_rate=drop_rate,
-                                    momentum=momentum,
-                                    activate_before_residual=True)
-        self.block2 = _NetworkBlock(nb_layers=n,
-                                    in_planes=channels[1],
-                                    out_planes=channels[2],
-                                    stride=2,
-                                    drop_rate=drop_rate,
-                                    momentum=momentum,
-                                    activate_before_residual=False)
-        self.block3 = _NetworkBlock(nb_layers=n,
-                                    in_planes=channels[2],
-                                    out_planes=channels[3],
-                                    stride=2,
-                                    drop_rate=drop_rate,
-                                    momentum=momentum,
-                                    activate_before_residual=False)
+        self.conv1 = nn.Conv2d(
+            in_channels, channels[0], kernel_size=3, stride=1, padding=1, bias=True
+        )
+        self.block1 = _NetworkBlock(
+            nb_layers=n,
+            in_planes=channels[0],
+            out_planes=channels[1],
+            stride=first_stride,
+            drop_rate=drop_rate,
+            momentum=momentum,
+            activate_before_residual=True,
+        )
+        self.block2 = _NetworkBlock(
+            nb_layers=n,
+            in_planes=channels[1],
+            out_planes=channels[2],
+            stride=2,
+            drop_rate=drop_rate,
+            momentum=momentum,
+            activate_before_residual=False,
+        )
+        self.block3 = _NetworkBlock(
+            nb_layers=n,
+            in_planes=channels[2],
+            out_planes=channels[3],
+            stride=2,
+            drop_rate=drop_rate,
+            momentum=momentum,
+            activate_before_residual=False,
+        )
 
         # global average pooling and classifier
         self.bn1 = nn.BatchNorm2d(channels[3], momentum=momentum, eps=0.001)
@@ -152,9 +157,9 @@ class _WideResNet(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight,
-                                        mode='fan_out',
-                                        nonlinearity='leaky_relu')
+                nn.init.kaiming_normal_(
+                    m.weight, mode="fan_out", nonlinearity="leaky_relu"
+                )
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
@@ -172,19 +177,21 @@ class _WideResNet(nn.Module):
         out = out.view(-1, self.channels)
         return self.classifier(out)
 
-class WideResNet(nn.Module):
-    """ A WideResNet
-    """
 
-    def __init__(self,
-                 num_classes,
-                 in_channels,
-                 depth,
-                 widen_factor,
-                 first_stride=1,
-                 drop_rate=0.0,
-                 momentum=0.001):
-        """ Initialise a WideResNet
+class WideResNet(nn.Module):
+    """A WideResNet"""
+
+    def __init__(
+        self,
+        num_classes,
+        in_channels,
+        depth,
+        widen_factor,
+        first_stride=1,
+        drop_rate=0.0,
+        momentum=0.001,
+    ):
+        """Initialise a WideResNet
 
         Args:
             num_classes: The number of classes for the output layer
@@ -197,27 +204,25 @@ class WideResNet(nn.Module):
         """
 
         super().__init__()
-        self.model = _WideResNet(num_classes=num_classes,
-                                 in_channels=in_channels,
-                                 depth=depth,
-                                 widen_factor=widen_factor,
-                                 first_stride=first_stride,
-                                 drop_rate=drop_rate,
-                                 momentum=momentum)
+        self.model = _WideResNet(
+            num_classes=num_classes,
+            in_channels=in_channels,
+            depth=depth,
+            widen_factor=widen_factor,
+            first_stride=first_stride,
+            drop_rate=drop_rate,
+            momentum=momentum,
+        )
 
     def forward(self, x):
         return self.model(x)
 
 
 class WideResNet_10_1(WideResNet):
-    """ A WideResNet with depth 10 and widen factor 1"""
+    """A WideResNet with depth 10 and widen factor 1"""
 
-    def __init__(self,
-                 num_classes,
-                 in_channels,
-                 first_stride=1,
-                 drop_rate=0.0):
-        """ Initialise a WideResNet with depth 10 and widen factor 1
+    def __init__(self, num_classes, in_channels, first_stride=1, drop_rate=0.0):
+        """Initialise a WideResNet with depth 10 and widen factor 1
 
         Args:
             num_classes: The number of classes for the output layer
@@ -225,23 +230,21 @@ class WideResNet_10_1(WideResNet):
             first_stride: The stride for the first NetworkBlock
             drop_rate: The droprate for dropout layers
         """
-        super().__init__(num_classes,
-                         in_channels,
-                         depth=10,
-                         widen_factor=1,
-                         first_stride=first_stride,
-                         drop_rate=drop_rate)
+        super().__init__(
+            num_classes,
+            in_channels,
+            depth=10,
+            widen_factor=1,
+            first_stride=first_stride,
+            drop_rate=drop_rate,
+        )
 
 
 class WideResNet_28_2(WideResNet):
-    """ A WideResNet with depth 28 and widen factor 2"""
+    """A WideResNet with depth 28 and widen factor 2"""
 
-    def __init__(self,
-                 num_classes,
-                 in_channels,
-                 first_stride=1,
-                 drop_rate=0.0):
-        """ Initialise a WideResNet with depth 10 and widen factor 1
+    def __init__(self, num_classes, in_channels, first_stride=1, drop_rate=0.0):
+        """Initialise a WideResNet with depth 10 and widen factor 1
 
         Args:
             num_classes: The number of classes for the output layer
@@ -249,26 +252,25 @@ class WideResNet_28_2(WideResNet):
             first_stride: The stride for the first NetworkBlock
             drop_rate: The droprate for dropout layers
         """
-        super().__init__(num_classes,
-                         in_channels,
-                         depth=28,
-                         widen_factor=2,
-                         first_stride=first_stride,
-                         drop_rate=drop_rate)
+        super().__init__(
+            num_classes,
+            in_channels,
+            depth=28,
+            widen_factor=2,
+            first_stride=first_stride,
+            drop_rate=drop_rate,
+        )
 
 
 class WideResNet_28_8(WideResNet):
-    """ A WideResNet with depth 28 and widen factor 8"""
+    """A WideResNet with depth 28 and widen factor 8"""
 
-    def __init__(self,
-                 num_classes,
-                 in_channels,
-                 first_stride=1,
-                 drop_rate=0.0):
-        super().__init__(num_classes,
-                         in_channels,
-                         depth=28,
-                         widen_factor=8,
-                         first_stride=first_stride,
-                         drop_rate=drop_rate)
-
+    def __init__(self, num_classes, in_channels, first_stride=1, drop_rate=0.0):
+        super().__init__(
+            num_classes,
+            in_channels,
+            depth=28,
+            widen_factor=8,
+            first_stride=first_stride,
+            drop_rate=drop_rate,
+        )

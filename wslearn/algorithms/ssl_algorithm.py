@@ -3,9 +3,7 @@ class Algorithm:
     def __init__(self):
         pass
 
-
-
-    def forward(self, model, lbl_batch:dict, ulbl_batch:dict, log_func=None):
+    def forward(self, model, lbl_batch: dict, ulbl_batch: dict, log_func=None):
         """
         forward specific to each algorithm
         """
@@ -15,4 +13,3 @@ class Algorithm:
         # log
         # return loss
         raise NotImplementedError
-

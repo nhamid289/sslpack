@@ -1,7 +1,8 @@
 import torch
 import numpy as np
 
-class Dataset():
+
+class Dataset:
 
     def __init__(self):
         self.lbl_dataset = None
@@ -16,8 +17,3 @@ class Dataset():
 
     def get_eval_dataset(self):
         return self.eval_dataset
-
-
-
-
-

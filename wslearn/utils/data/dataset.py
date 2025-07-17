@@ -14,7 +14,7 @@ class BasicDataset(Dataset):
         """
         Return the number of elements in the dataset
         """
-        return(len(self.X))
+        return len(self.X)
 
     def __getitem__(self, index):
         """
@@ -38,8 +38,16 @@ class TransformDataset(Dataset):
     """
     A class to store a dataset and apply any transformations to the data
     """
-    def __init__(self, X, y=None, transform= None, weak_transform=None,
-                 strong_transform=None, return_X_y=False):
+
+    def __init__(
+        self,
+        X,
+        y=None,
+        transform=None,
+        weak_transform=None,
+        strong_transform=None,
+        return_X_y=False,
+    ):
         """
         Initialise an WSL dataset. This can be either a labelled or unlabelled
         dataset.
@@ -72,7 +80,7 @@ class TransformDataset(Dataset):
         """
         Return the number of elements in the dataset
         """
-        return(len(self.X))
+        return len(self.X)
 
     def __getitem__(self, index):
         """
@@ -108,6 +116,3 @@ class TransformDataset(Dataset):
             out_dict["X"] = X
 
         return out_dict
-
-
-

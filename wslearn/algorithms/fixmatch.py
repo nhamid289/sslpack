@@ -6,16 +6,22 @@ from wslearn.utils.criterions import ce_consistency_loss
 
 from .utils import _threshold_mask
 
+
 class FixMatch(Algorithm):
-    """ An implementation of FixMatch (https://arxiv.org/pdf/2001.07685)
+    """An implementation of FixMatch (https://arxiv.org/pdf/2001.07685)
 
     By default the algorithm uses cross entropy loss for the supervised part,
     and cross entropy consistency loss for the unsupervised part.
     """
 
-    def __init__(self, lambda_u=1, conf_threshold=0.95,
-                 max_pseudo_labels=None, sup_loss_func=None,
-                 unsup_loss_func=None):
+    def __init__(
+        self,
+        lambda_u=1,
+        conf_threshold=0.95,
+        max_pseudo_labels=None,
+        sup_loss_func=None,
+        unsup_loss_func=None,
+    ):
         """
         Initialise a fixmatch algorithm.
 
@@ -63,10 +69,9 @@ class FixMatch(Algorithm):
         x_ulbl_weak = ulbl_batch["weak"]
         x_ulbl_strong = ulbl_batch["strong"]
 
-        confs, pseudo_labels, mask = _threshold_mask(model,
-                                                     x_ulbl_weak,
-                                                     self.conf_threshold,
-                                                     self.max_pseudo_labels)
+        confs, pseudo_labels, mask = _threshold_mask(
+            model, x_ulbl_weak, self.conf_threshold, self.max_pseudo_labels
+        )
 
         # with torch.no_grad():
         #     logits = model(x_ulbl_weak)
@@ -83,8 +88,8 @@ class FixMatch(Algorithm):
 
         x = torch.concat([x_lbl_weak, x_ulbl_strong])
         out = model(x)
-        out_lbl_weak = out[:x_lbl_weak.size(0)]
-        out_ulbl_strong = out[x_lbl_weak.size(0):]
+        out_lbl_weak = out[: x_lbl_weak.size(0)]
+        out_ulbl_strong = out[x_lbl_weak.size(0) :]
 
         sup_loss = self.sup_loss_func(out_lbl_weak, lbl_batch["y"])
 
@@ -93,13 +98,15 @@ class FixMatch(Algorithm):
         total_loss = sup_loss + self.lambda_u * unsup_loss
 
         if log_func is not None:
-            log_func({
-                "sup_loss": sup_loss.item(),
-                "unsup_loss": unsup_loss.item(),
-                "total_loss": total_loss.item(),
-                "confidences": confs.detach().cpu(),
-                "pseudo_labels": pseudo_labels.detach().cpu(),
-                "mask": mask.detach().cpu()
-            })
+            log_func(
+                {
+                    "sup_loss": sup_loss.item(),
+                    "unsup_loss": unsup_loss.item(),
+                    "total_loss": total_loss.item(),
+                    "confidences": confs.detach().cpu(),
+                    "pseudo_labels": pseudo_labels.detach().cpu(),
+                    "mask": mask.detach().cpu(),
+                }
+            )
 
         return total_loss
