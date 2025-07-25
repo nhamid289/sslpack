@@ -1,6 +1,6 @@
 # sslpack
 
-A package for semi0supervised learning.
+A package for semi-supervised learning.
 
 This package is built from Microsoft's Unified SSL Benchmark (https://github.com/microsoft/Semi-supervised-learning/tree/main)
 but is designed to be more transparent, more flexible and more extensible than USB.
