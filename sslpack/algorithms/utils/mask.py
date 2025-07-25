@@ -1,10 +1,7 @@
 import torch
 
-
-def _threshold_mask(model, x, threshold, max_labels):
+def threshold_mask(probs, threshold, max_labels):
     with torch.no_grad():
-        logits = model(x)
-        probs = torch.softmax(logits, dim=1)
         confs, pseudo_labels = torch.max(probs, dim=1)
         mask = confs.ge(threshold)
         if max_labels is not None:

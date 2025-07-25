@@ -4,15 +4,15 @@ from sslpack.utils.criterions import ce_consistency_loss
 import torch
 import torch.nn.functional as F
 
-from .utils import _threshold_mask
+from sslpack.algorithms.utils import threshold_mask
 
 class PseudoLabel(Algorithm):
     """
     An implementation of PseudoLabel algorithm for weakly supervised training.
     """
 
-    def __init__(self, lambda_u=1, conf_threshold=0.95, max_pseudo_labels=None,
-                 sup_loss_func=None, unsup_loss_func=None):
+    def __init__(self, lambda_u=1, conf_threshold=0.95, concat=True, dist_align=None,
+                 max_pseudo_labels=None, sup_loss_func=None, unsup_loss_func=None):
         """
         Initialise a PseudoLabel algorithm
 
@@ -31,6 +31,8 @@ class PseudoLabel(Algorithm):
         self.lambda_u = lambda_u
         self.conf_threshold = conf_threshold
         self.max_pseudo_labels = max_pseudo_labels
+        self.concat = concat
+        self.dist_align = dist_align
 
         if sup_loss_func is None:
             # Default reduction is 'mean'
@@ -55,19 +57,28 @@ class PseudoLabel(Algorithm):
             log_func: A function which accepts a dictionary containing some
                 training information
         """
+
         x_lbl = lbl_batch["X"]
         x_ulbl = ulbl_batch["X"]
 
-        # generate pseudo-labels
-        confs, pseudo_labels, mask = _threshold_mask(model,
-                                                     x_ulbl,
-                                                     self.conf_threshold,
-                                                     self.max_pseudo_labels)
+        if self.concat is True:
+            x = torch.concat([x_lbl, x_ulbl])
+            out = model(x)
+            out_lbl = out[:x_lbl.size(0)]
+            out_ulbl = out[x_lbl.size(0):]
+        else:
+            out_lbl = model(x_lbl)
+            out_ulbl = model(x_ulbl)
 
-        x = torch.concat([x_lbl, x_ulbl])
-        out = model(x)
-        out_lbl = out[:x_lbl.size(0)]
-        out_ulbl = out[x_lbl.size(0):]
+        probs_ulbl = torch.softmax(out_ulbl, dim=1)
+
+        if self.dist_align is not None:
+            probs_ulbl = self.dist_align(probs_ulbl)
+
+        # generate pseudo-labels
+        confs, pseudo_labels, mask = threshold_mask(probs_ulbl,
+                                                    self.conf_threshold,
+                                                    self.max_pseudo_labels)
 
         sup_loss = self.sup_loss_func(out_lbl, lbl_batch["y"])
         unsup_loss = self.unsup_loss_func(out_ulbl, pseudo_labels, mask)
