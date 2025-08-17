@@ -1,13 +1,11 @@
+import torch
 from torchvision.datasets import CIFAR10, CIFAR100
 from torchvision import transforms
-import torch
 from PIL import Image
 
 from sslpack.datasets import Dataset
 from sslpack.utils.data import TransformDataset, BasicDataset, split_lb_ulb_balanced
 from sslpack.utils.augmentation import RandAugment
-
-import numpy as np
 
 
 class Cifar(Dataset):
@@ -24,11 +22,13 @@ class Cifar(Dataset):
         download=True,
         return_ulbl_labels=False,
         return_idx=False,
+        val_size=1/5,
     ):
 
         self.cifar = cifar
         self.return_ulbl_labels = return_ulbl_labels
         self.return_idx = return_idx
+        self.val_size = val_size
 
         self._define_transforms(crop_size, crop_ratio)
 
@@ -76,8 +76,16 @@ class Cifar(Dataset):
     def _get_dataset(self, lbls_per_class, ulbls_per_class, seed, data_dir, download):
 
         train = self.cifar(data_dir, train=True, download=download)
-        X_tr, y_tr = train.data, train.targets
+        num_val = int(self.val_size*len(train))
+        generator = None if seed is None else torch.Generator().manual_seed(seed)
+        idx = torch.randperm(len(train), generator=generator)
+        idx_val, idx_tr = idx[:num_val], idx[num_val:]
+
+        X, y = train.data, torch.tensor(train.targets)
+        X_tr, y_tr = X[idx_tr], y[idx_tr]
+        X_val, y_val = X[idx_val], y[idx_val]
         X_tr = [Image.fromarray(x) for x in X_tr]
+        X_val = [Image.fromarray(x) for x in X_val]
 
         X_lb, y_lb, X_ulb, y_ulb = split_lb_ulb_balanced(
             X_tr,
@@ -96,7 +104,7 @@ class Cifar(Dataset):
             transform=self.transform,
             weak_transform=self.weak_transform,
             strong_transform=self.strong_transform,
-            return_idx=self.return_idx
+            return_idx=self.return_idx,
         )
 
         self.ulbl_dataset = TransformDataset(
@@ -105,15 +113,20 @@ class Cifar(Dataset):
             transform=self.transform,
             weak_transform=self.weak_transform,
             strong_transform=self.strong_transform,
-            return_idx=self.return_idx
+            return_idx=self.return_idx,
         )
 
         test = self.cifar(data_dir, train=False, download=download)
-        X_ts, y_ts = test.data, test.targets
+        X_ts, y_ts = test.data, torch.tensor(test.targets)
         X_ts = [Image.fromarray(x) for x in X_ts]
 
-        self.eval_dataset = BasicDataset(X=X_ts, y=y_ts, transform=self.transform, return_idx=self.return_idx)
+        self.eval_dataset = BasicDataset(
+            X=X_ts, y=y_ts, transform=self.transform, return_idx=self.return_idx
+        )
 
+        self.val_dataset = BasicDataset(
+            X=X_val, y=y_val, transform=self.transform, return_idx=self.return_idx
+        )
 
 class Cifar10(Cifar):
     """
@@ -123,18 +136,19 @@ class Cifar10(Cifar):
 
     def __init__(
         self,
+        data_dir,
         lbls_per_class=4,
         ulbls_per_class=None,
+        return_ulbl_labels=False,
+        return_idx=False,
         seed=None,
         crop_size=32,
         crop_ratio=1,
-        return_ulb_labels=False,
-        return_idx=False,
-        data_dir="~/.sslpack/datasets/CIFAR10",
-        download=True,
+        val_size=1/6,
+        download=False,
     ):
         """
-        Initialise a CIFAR100 dataset.  Contains a labelled, unlabelled and evaluation dataset.
+        Initialise a CIFAR100 SSL dataset.  Contains a labelled, unlabelled and evaluation dataset. All features are normalised.
 
         Elements from the datasets are return as dictionaries with keys
             "X": The original features as a tensor
@@ -144,6 +158,7 @@ class Cifar10(Cifar):
             "idx": The dataset index, if enabled.
 
         Args:
+            data_dir: The directory where the data is saved, or where it will be saved to if download=True
             lbls_per_class: The number of labelled observations to include per class
             ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
             seed: The seed for randomly choosing the labelled instances
@@ -151,7 +166,6 @@ class Cifar10(Cifar):
             crop_ratio: The crop ratio used for padding when cropping during augmentations
             return_ulb_labels: If true, the labels for the unlabelled data are included
             return_idx: If true, the indices are returned when accessing a dataset
-            data_dir: The directory to save the dataset
             download: If true, the dataset is downloaded if it does not already exist
         """
         super().__init__(
@@ -163,8 +177,9 @@ class Cifar10(Cifar):
             crop_size,
             crop_ratio,
             download,
-            return_ulb_labels,
-            return_idx
+            return_ulbl_labels,
+            return_idx,
+            val_size
         )
 
 
@@ -175,19 +190,20 @@ class Cifar100(Cifar):
 
     def __init__(
         self,
+        data_dir,
         lbls_per_class=4,
         ulbls_per_class=None,
+        return_ulbl_labels=False,
+        return_idx=False,
         seed=None,
         crop_size=32,
         crop_ratio=1,
-        return_ulbl_labels=False,
-        return_idx=False,
-        data_dir="~/.sslpack/datasets/CIFAR100",
-        download=True,
+        val_size=1/5,
+        download=False,
     ):
         """
 
-        Initialise a CIFAR100 dataset.  Contains a labelled, unlabelled and evaluation dataset.
+        Initialise a CIFAR100 SSL dataset.  Contains a labelled, unlabelled and evaluation dataset. All features are normalised.
 
         Elements from the datasets are return as dictionaries with keys
             "X": The original features as a tensor
@@ -197,6 +213,7 @@ class Cifar100(Cifar):
             "idx": The dataset index, if enabled.
 
         Args:
+            data_dir: The directory where the data is saved, or where it will be saved to if download=True
             lbls_per_class: The number of labelled observations to include per class
             ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
             seed: The seed for randomly choosing the labelled instances
@@ -204,7 +221,6 @@ class Cifar100(Cifar):
             crop_ratio: The crop ratio used for padding when cropping during augmentations
             return_ulb_labels: If true, the labels for the unlabelled data are included
             return_idx: If true, the indices are returned when accessing a dataset
-            data_dir: The directory to save the dataset
             download: If true, the dataset is downloaded if it does not already exist
         """
         super().__init__(
@@ -217,5 +233,6 @@ class Cifar100(Cifar):
             crop_ratio,
             download,
             return_ulbl_labels,
-            return_idx
+            return_idx,
+            val_size
         )
