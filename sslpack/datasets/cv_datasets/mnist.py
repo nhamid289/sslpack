@@ -50,8 +50,11 @@ class Mnist(Dataset):
         mnist_ts = MN(root=data_dir, train=False, download=download)
 
         num_val = int(val_size*len(mnist_tr))
-        generator = None if seed is None else torch.Generator().manual_seed(seed)
-        idx = torch.randperm(len(mnist_tr), generator=torch.Generator().manual_seed(seed))
+        if seed is None:
+            idx = torch.randperm(len(mnist_tr))
+        else:
+            idx = torch.randperm(len(mnist_tr),
+                                 generator=torch.Generator().manual_seed(seed))
         idx_val, idx_tr = idx[:num_val], idx[num_val:]
 
         X, y = mnist_tr.data.float() / 255, mnist_tr.targets
