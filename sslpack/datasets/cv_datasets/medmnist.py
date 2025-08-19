@@ -35,9 +35,10 @@ class MedMnist(Dataset):
         X_ts, y_ts = torch.tensor(ts.imgs).float() / 255, torch.tensor(ts.labels)
         X_val, y_val = torch.tensor(val.imgs).float() / 255, torch.tensor(val.labels)
 
-        X_tr = X_tr.permute(0, 3, 1, 2)
-        X_ts = X_ts.permute(0, 3, 1, 2)
-        X_val = X_val.permute(0, 3, 1, 2)
+        # different medmnist datasets have different channel configuration
+        X_tr = self._permute(X_tr)
+        X_ts = self._permute(X_ts)
+        X_val = self._permute(X_val)
 
         y_tr, y_ts, y_val = y_tr.squeeze(1), y_ts.squeeze(1), y_val.squeeze(1)
 
@@ -114,9 +115,8 @@ class MedMnist(Dataset):
             X_ts, y_ts, transform=self.transform, return_idx=return_idx
         )
 
-    def get_val_dataset(self):
-        return self.val_dataset
-
+    def _permute(self, X):
+        return X.permute(0, 3, 1, 2)
 
 class BloodMnist(MedMnist):
 
@@ -416,6 +416,9 @@ class BreastMnist(MedMnist):
             crop_ratio,
             download,
         )
+
+    def _permute(self, X):
+        return X.permute(0, 1, 2)
 
 
 class BloodMnist(MedMnist):
