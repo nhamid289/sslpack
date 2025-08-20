@@ -82,7 +82,8 @@ class FixMatch(Algorithm):
         probs_ubl_weak = torch.softmax(out_ulbl_weak, dim=1)
 
         if self.dist_align is not None:
-            probs_ubl_weak = self.dist_align(probs_ubl_weak)
+            probs_ubl_weak = self.dist_align(probs_ubl_weak,out_lbl_weak.softmax(dim=1))
+            # probs_ubl_weak = self.dist_align(probs_ubl_weak)
 
         # pseudo-labels are generated under no_grad()
         confs, pseudo_labels, mask = threshold_mask(probs_ubl_weak,
