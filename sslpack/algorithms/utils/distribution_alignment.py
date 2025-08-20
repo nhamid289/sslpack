@@ -21,9 +21,6 @@ class DistributionAlignment(nn.Module):
         if self.model_dist is None:
             self.model_dist = torch.ones(self.num_classes, device=probs_ulb.device)/self.num_classes
         
-        # if self.prior is not None:
-        #     self.target_dist = self.prior.to(probs_ulb.device)
-        # else:
         if self.prior is None:
             if self.target_dist is None:
                 self.target_dist = torch.ones(self.num_classes, device=probs_ulb.device)/self.num_classes
