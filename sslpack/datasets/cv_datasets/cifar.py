@@ -23,10 +23,12 @@ class Cifar(Dataset):
         crop_ratio=1,
         download=True,
         return_ulbl_labels=False,
+        return_idx=False,
     ):
 
         self.cifar = cifar
         self.return_ulbl_labels = return_ulbl_labels
+        self.return_idx = return_idx
 
         self._define_transforms(crop_size, crop_ratio)
 
@@ -94,6 +96,7 @@ class Cifar(Dataset):
             transform=self.transform,
             weak_transform=self.weak_transform,
             strong_transform=self.strong_transform,
+            return_idx=self.return_idx
         )
 
         self.ulbl_dataset = TransformDataset(
@@ -102,18 +105,20 @@ class Cifar(Dataset):
             transform=self.transform,
             weak_transform=self.weak_transform,
             strong_transform=self.strong_transform,
+            return_idx=self.return_idx
         )
 
         test = self.cifar(data_dir, train=False, download=download)
         X_ts, y_ts = test.data, test.targets
         X_ts = [Image.fromarray(x) for x in X_ts]
 
-        self.eval_dataset = BasicDataset(X=X_ts, y=y_ts, transform=self.transform)
+        self.eval_dataset = BasicDataset(X=X_ts, y=y_ts, transform=self.transform, return_idx=self.return_idx)
 
 
 class Cifar10(Cifar):
     """
-    A Cifar10 semi supervised learning dataset with transformations
+    A Cifar10 semi supervised learning dataset with transformations.
+
     """
 
     def __init__(
@@ -124,10 +129,19 @@ class Cifar10(Cifar):
         crop_size=32,
         crop_ratio=1,
         return_ulb_labels=False,
+        return_idx=False,
         data_dir="~/.sslpack/datasets/CIFAR10",
         download=True,
     ):
         """
+        Initialise a CIFAR100 dataset.  Contains a labelled, unlabelled and evaluation dataset.
+
+        Elements from the datasets are return as dictionaries with keys
+            "X": The original features as a tensor
+            "weak": The weak augmentation applied to the features
+            "strong": The strong augmentation applied to the features
+            "y": The labels, if applicable
+            "idx": The dataset index, if enabled.
 
         Args:
             lbls_per_class: The number of labelled observations to include per class
@@ -136,6 +150,7 @@ class Cifar10(Cifar):
             crop_size: The length/width of crop size for resizing (square) during augmentations
             crop_ratio: The crop ratio used for padding when cropping during augmentations
             return_ulb_labels: If true, the labels for the unlabelled data are included
+            return_idx: If true, the indices are returned when accessing a dataset
             data_dir: The directory to save the dataset
             download: If true, the dataset is downloaded if it does not already exist
         """
@@ -149,6 +164,7 @@ class Cifar10(Cifar):
             crop_ratio,
             download,
             return_ulb_labels,
+            return_idx
         )
 
 
@@ -165,10 +181,20 @@ class Cifar100(Cifar):
         crop_size=32,
         crop_ratio=1,
         return_ulbl_labels=False,
+        return_idx=False,
         data_dir="~/.sslpack/datasets/CIFAR100",
         download=True,
     ):
         """
+
+        Initialise a CIFAR100 dataset.  Contains a labelled, unlabelled and evaluation dataset.
+
+        Elements from the datasets are return as dictionaries with keys
+            "X": The original features as a tensor
+            "weak": The weak augmentation applied to the features
+            "strong": The strong augmentation applied to the features
+            "y": The labels, if applicable
+            "idx": The dataset index, if enabled.
 
         Args:
             lbls_per_class: The number of labelled observations to include per class
@@ -177,6 +203,7 @@ class Cifar100(Cifar):
             crop_size: The length/width of crop size for resizing (square) during augmentations
             crop_ratio: The crop ratio used for padding when cropping during augmentations
             return_ulb_labels: If true, the labels for the unlabelled data are included
+            return_idx: If true, the indices are returned when accessing a dataset
             data_dir: The directory to save the dataset
             download: If true, the dataset is downloaded if it does not already exist
         """
@@ -190,4 +217,5 @@ class Cifar100(Cifar):
             crop_ratio,
             download,
             return_ulbl_labels,
+            return_idx
         )

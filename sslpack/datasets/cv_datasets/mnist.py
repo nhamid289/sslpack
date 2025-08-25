@@ -13,6 +13,7 @@ class Mnist(Dataset):
         lbls_per_class,
         ulbls_per_class=None,
         seed=None,
+        return_idx=False,
         return_ulbl_labels=False,
         crop_size=28,
         crop_ratio=1,
@@ -83,6 +84,7 @@ class Mnist(Dataset):
             transform=self.transform,
             weak_transform=self.weak_transform,
             strong_transform=self.strong_transform,
+            return_idx=return_idx
         )
 
         self.ulbl_dataset = TransformDataset(
@@ -91,8 +93,9 @@ class Mnist(Dataset):
             transform=self.transform,
             weak_transform=self.weak_transform,
             strong_transform=self.strong_transform,
+            return_idx=return_idx
         )
 
         X_ts, y_ts = X_ts.float(), y_ts.float()
 
-        self.eval_dataset = BasicDataset(X_ts, y_ts, transform=self.transform)
+        self.eval_dataset = BasicDataset(X_ts, y_ts, transform=self.transform, return_idx=return_idx)

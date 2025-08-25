@@ -5,9 +5,10 @@ import numpy as np
 
 
 class BasicDataset(Dataset):
-    def __init__(self, X, y=None, transform=None):
+    def __init__(self, X, y=None, transform=None, return_idx=False):
         self.X = X
         self.y = y
+        self.return_idx = return_idx
         self.transform = transform
 
     def __len__(self):
@@ -31,6 +32,9 @@ class BasicDataset(Dataset):
         if y is not None:
             out_dict["y"] = y
 
+        if self.return_idx is True:
+            out_dict["idx"] = index
+
         return out_dict
 
 
@@ -47,6 +51,7 @@ class TransformDataset(Dataset):
         weak_transform=None,
         strong_transform=None,
         return_X_y=False,
+        return_idx=False
     ):
         """
         Initialise an WSL dataset. This can be either a labelled or unlabelled
@@ -71,6 +76,7 @@ class TransformDataset(Dataset):
         self.X = X
         self.y = y
         self.return_X_y = return_X_y
+        self.return_idx = return_idx
 
         self.transform = transform
         self.weak_transform = weak_transform
@@ -114,5 +120,7 @@ class TransformDataset(Dataset):
             out_dict["X"] = self.transform(X)
         else:
             out_dict["X"] = X
+        if self.return_idx:
+            out_dict["idx"] = index
 
         return out_dict
