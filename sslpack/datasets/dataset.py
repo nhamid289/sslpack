@@ -1,13 +1,16 @@
 import torch
 import numpy as np
 
-
 class Dataset:
+    """
+    Interface for dataset class.
+    """
 
     def __init__(self):
         self.lbl_dataset = None
         self.ulbl_dataset = None
         self.eval_dataset = None
+        self.val_dataset = None
 
     def get_lbl_dataset(self):
         return self.lbl_dataset
@@ -17,3 +20,6 @@ class Dataset:
 
     def get_eval_dataset(self):
         return self.eval_dataset
+
+    def get_val_dataset(self):
+        return self.val_dataset
