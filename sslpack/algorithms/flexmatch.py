@@ -84,9 +84,10 @@ class FlexMatch(Algorithm):
                 out_ulbl_weak = model(ulbl_batch["weak"])
 
         probs_ubl_weak = torch.softmax(out_ulbl_weak, dim=1)
+        probs_lbl_weak = torch.softmax(out_lbl_weak, dim=1)
 
         if self.dist_align is not None:
-            probs_ubl_weak = self.dist_align(probs_ubl_weak)
+            probs_ubl_weak = self.dist_align(probs_ubl_weak, probs_lbl_weak)
 
         confs, pseudo_labels, mask = self.flex_mask(probs_ubl_weak)
         self.update(confs, pseudo_labels, ulbl_batch["idx"])

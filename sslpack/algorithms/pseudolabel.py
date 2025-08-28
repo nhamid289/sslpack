@@ -71,9 +71,10 @@ class PseudoLabel(Algorithm):
             out_ulbl = model(x_ulbl)
 
         probs_ulbl = torch.softmax(out_ulbl, dim=1)
+        probs_lbl = torch.softmax(out_lbl, dim=1)
 
         if self.dist_align is not None:
-            probs_ulbl = self.dist_align(probs_ulbl)
+            probs_ulbl = self.dist_align(probs_ulbl, probs_lbl)
 
         # generate pseudo-labels
         confs, pseudo_labels, mask = threshold_mask(probs_ulbl,
