@@ -5,7 +5,7 @@ from sslpack.algorithms import Algorithm
 from sslpack.algorithms.utils import DistributionAlignment
 from sslpack.utils.criterions import ce_consistency_loss as cel
 
-from torch import Tensor, device
+from torch import Tensor, device, nn
 from typing import Optional, Callable, Union
 
 class FlexMatch(Algorithm):
@@ -101,18 +101,27 @@ class FlexMatch(Algorithm):
 
         return o_lbl_w, o_ulbl_w, o_ulbl_s
 
-    def forward(self, model, lbl_batch, ulbl_batch, log_func=None):
+    def forward(self,
+                model:nn.Module,
+                lbl_batch:dict,
+                ulbl_batch:dict,
+                log_func:Optional[Callable[[dict], None]]=None):
         """
-        Performs a forward pass of FixMatch
+        Performs a forward pass of FlexMatch
 
         Args:
-            model: The predictor model
-            lbl_batch: A dictionary containing the labelled batch. Expects keys
-                "weak", "strong" for augmented features, "y" for labels
-            ubl_batch: A dictionary with unlabelled data with keys. Expects keys
-                "weak", "strong" for augmented features, and "idx" for data indices
-            log_func: A function which accepts a dictionary containing some
-                training information
+            model (nn.Module):
+                The classification model
+            lbl_batch (dict):
+                A dictionary containing the labelled batch. Expects keys "weak", "strong" for
+                augmented features, "y" for labels
+            ubl_batch (dict):
+                A dictionary with unlabelled data with keys. Expects keys "weak", "strong" for
+                augmented features, and "idx" for data indices
+            log_func (Callable[[dict], None]):
+                A function which accepts a dictionary containing training information for the batch.
+                The keys in the dictionary are "sup_loss", "unsup_loss", "total_loss",
+                "confidences", "pseudo_labels", "mask", "class_count"
         """
         # model outputs on labelled/unlabelled examples with augmentations
         o_lbl_w, o_ulbl_w, o_ulbl_s = self._model_outputs(model, lbl_batch, ulbl_batch)
