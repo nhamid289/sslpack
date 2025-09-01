@@ -1,31 +1,56 @@
 from sslpack.algorithms import Algorithm
-from sslpack.utils.criterions import ce_consistency_loss
+from sslpack.utils.criterions import ce_consistency_loss as cel
 
 import torch
-import torch.nn.functional as F
+from torch import Tensor, nn
+from torch.nn.functional import cross_entropy as ce
+
+from typing import Optional, Callable
 
 from sslpack.algorithms.utils import threshold_mask, DistributionAlignment
 
 class PseudoLabel(Algorithm):
     """
     An implementation of PseudoLabel algorithm for weakly supervised training.
+
+    Args:
+        lambda_u (float, optional):
+            The weight of the unlabelled loss in the total loss. Expects non-negative real >= 0. Defaults to 1.
+        conf_threshold (float, optional):
+            The default confidence threshold for pseudo-labels. Expects a float in [0, 1]. Defaults to 0.95
+        concat (bool, optional):
+            If True, the labelled and unlabelled batches are concatenated, and a single forward pass of the model is performed.
+            If False, a separate forward pass is performed for each of the labelled and unlabelled batches.
+            Defaults to True.
+        use_dist_align (bool, optional):
+            If True, distribution alignment is performed on the weakly-augmented unlabelled output prior to pseudo-labelling. Defaults to False.
+        dist_align (Callable[[Tensor, Tensor], Tensor], optional):
+            The distribution alignment function used. Expects a callable with arguments f(probs_ulbl, probs_lbl) which
+            are normalised vectors with dimension matching num_classes. By default, the sslpack DistributionAlignment implementation is used.
+        max_pseudo_labels (int, optional):
+            The maximum number of pseudo-labels to use in each unlabelled batch. If None, all pseudo-labels above the threshold are accepted.
+            Higher confidence labels are prioritised. Defaults to None.
+        sup_loss_func (Callable[[Tensor, Tensor], Tensor], optional):
+            a function with signature f(pred, true) to compute
+            the loss on the supervised batch. Defaults to torch cross_entropy
+        unsup_loss_func (Callable[[Tensor, Tensor, Tensor], Tensor], optional):
+            a function with signature f(pred, true, mask) compute the loss on the unsupervised batch for only unmasked examples.
+            Defaults to sslpack's masked cross entropy
+
     """
 
-    def __init__(self, lambda_u=1, conf_threshold=0.95, concat=True, use_dist_align=False, dist_align=None,
-                 max_pseudo_labels=None, sup_loss_func=None, unsup_loss_func=None):
+    def __init__(self,
+                 lambda_u:float=1,
+                 conf_threshold:float=0.95,
+                 concat:bool=True,
+                 use_dist_align:bool=False,
+                 dist_align:Optional[Callable[[Tensor, Tensor], Tensor]]=None,
+                 max_pseudo_labels:Optional[int]=None,
+                 sup_loss_func:Optional[Callable[[Tensor, Tensor], Tensor]]=None,
+                 unsup_loss_func:Optional[Callable[[Tensor, Tensor, Tensor], Tensor]]=None
+                 ):
         """
         Initialise a PseudoLabel algorithm
-
-        Args:
-            lambda_u: The weight of the unlabelled loss in the total loss.
-            conf_threshold: The minimum confidence level needed for selecting
-                pseudo labels
-            max_pseudo_labels: The maximum number of pseudo labels to use
-                when computing unsupervised loss
-            sup_loss_func: a function with signature f(pred, true) to compute
-                the loss on the supervised batch. Default: Cross entropy
-            unsup_loss_func: a function with signature f(pred, true, mask) to
-                compute the loss on the unsupervised batch. Default: Masked cross entropy
         """
 
         self.lambda_u = lambda_u
@@ -38,19 +63,14 @@ class PseudoLabel(Algorithm):
         else:
             self.dist_align = dist_align
 
-        if sup_loss_func is None:
-            # Default reduction is 'mean'
-            self.sup_loss_func = F.cross_entropy
-        else:
-            self.sup_loss_func = sup_loss_func
+        self.sup_loss_func = ce if sup_loss_func is None else sup_loss_func
+        self.unsup_loss_func = cel if unsup_loss_func is None else unsup_loss_func
 
-        if unsup_loss_func is None:
-            # Default reduction is 'mean'
-            self.unsup_loss_func = ce_consistency_loss
-        else:
-            self.unsup_loss_func = unsup_loss_func
-
-    def forward(self, model, lbl_batch, ulbl_batch, log_func=None):
+    def forward(self,
+                model:nn.Module,
+                lbl_batch:dict,
+                ulbl_batch:dict,
+                log_func:Optional[Callable[[dict], None]]=None):
         """
         Perform a forward pass of PseudoLabel.
 
@@ -72,7 +92,8 @@ class PseudoLabel(Algorithm):
             out_ulbl = out[x_lbl.size(0):]
         else:
             out_lbl = model(x_lbl)
-            out_ulbl = model(x_ulbl)
+            with torch.no_grad():
+                out_ulbl = model(x_ulbl)
 
         probs_ulbl = torch.softmax(out_ulbl, dim=1)
         probs_lbl = torch.softmax(out_lbl, dim=1)

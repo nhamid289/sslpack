@@ -5,8 +5,8 @@ from sslpack.algorithms import Algorithm
 from sslpack.utils.criterions import ce_consistency_loss as cel
 
 from sslpack.algorithms.utils import threshold_mask, DistributionAlignment
-from torch import Tensor, device, nn
-from typing import Optional, Callable, Union
+from torch import Tensor, nn
+from typing import Optional, Callable
 
 class FixMatch(Algorithm):
     """ An implementation of FixMatch (https://arxiv.org/pdf/2001.07685)
@@ -49,7 +49,7 @@ class FixMatch(Algorithm):
                  unsup_loss_func:Optional[Callable[[Tensor, Tensor, Tensor], Tensor]]=None
                  ):
         """
-        Initialise a fixmatch algorithm.
+        Initialise a FixMatch algorithm.
 
         """
         super().__init__()
