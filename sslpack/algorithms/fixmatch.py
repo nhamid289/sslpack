@@ -5,34 +5,52 @@ from sslpack.algorithms import Algorithm
 from sslpack.utils.criterions import ce_consistency_loss as cel
 
 from sslpack.algorithms.utils import threshold_mask, DistributionAlignment
+from torch import Tensor, device, nn
+from typing import Optional, Callable, Union
 
 class FixMatch(Algorithm):
     """ An implementation of FixMatch (https://arxiv.org/pdf/2001.07685)
 
-    By default the algorithm uses cross entropy loss for the supervised part,
-    and cross entropy consistency loss for the unsupervised part.
+    FixMatch leverages Pseudo-labelling and augmentation anchoring to achieve SSL
+
+    Args:
+        lambda_u (float, optional):
+            The weight of the unlabelled loss in the total loss. Expects non-negative real >= 0. Defaults to 1.
+        conf_threshold (float, optional):
+            The default confidence threshold for pseudo-labels. Expects a float in [0, 1]. Defaults to 0.95
+        concat (bool, optional):
+            If True, the labelled and unlabelled batches are concatenated, and a single forward pass of the model is performed.
+            If False, a separate forward pass is performed for each of the labelled and unlabelled batches.
+            Defaults to True.
+        use_dist_align (bool, optional):
+            If True, distribution alignment is performed on the weakly-augmented unlabelled output prior to pseudo-labelling. Defaults to False.
+        dist_align (Callable[[Tensor, Tensor], Tensor], optional):
+            The distribution alignment function used. Expects a callable with arguments f(probs_ulbl, probs_lbl) which
+            are normalised vectors with dimension matching num_classes. By default, the sslpack DistributionAlignment implementation is used.
+        max_pseudo_labels (int, optional):
+            The maximum number of pseudo-labels to use in each unlabelled batch. If None, all pseudo-labels above the threshold are accepted.
+            Higher confidence labels are prioritised. Defaults to None.
+        sup_loss_func (Callable[[Tensor, Tensor], Tensor], optional):
+            a function with signature f(pred, true) to compute
+            the loss on the supervised batch. Defaults to torch cross_entropy
+        unsup_loss_func (Callable[[Tensor, Tensor, Tensor], Tensor], optional):
+            a function with signature f(pred, true, mask) compute the loss on the unsupervised batch for only unmasked examples.
+            Defaults to sslpack's masked cross entropy
     """
 
-    def __init__(self, lambda_u=1, conf_threshold=0.95, concat=True, use_dist_align=False,
-                 dist_align=None, max_pseudo_labels=None, sup_loss_func=None, unsup_loss_func=None):
+    def __init__(self,
+                 lambda_u:float=1,
+                 conf_threshold:float=0.95,
+                 concat:bool=True,
+                 use_dist_align:bool=False,
+                 dist_align:Optional[Callable[[Tensor, Tensor], Tensor]]=None,
+                 max_pseudo_labels:Optional[int]=None,
+                 sup_loss_func:Optional[Callable[[Tensor, Tensor], Tensor]]=None,
+                 unsup_loss_func:Optional[Callable[[Tensor, Tensor, Tensor], Tensor]]=None
+                 ):
         """
         Initialise a fixmatch algorithm.
 
-        Args:
-            lambda_u: The weight of the unlabelled loss in the total loss.
-            conf_threshold: the confidence threshold for pseudo-labels
-            concat: If false, a separate forward pass is performed for each labelled/unlabelled batches.
-                If true, the labelled and unlabelled data are concatenated and a single forward pass is performed.
-            use_dist_align: If true, distribution alignment is used
-            dist_align: The distribution alignment object to use.
-                Expects a callable with signature dist_align(probs_ulb, probs_lb)
-            max_pseudo_labels: The maximum number of pseudo-labels that can be used per batch.
-                The highest confidence pseudo-labels are prioritised.
-            sup_loss_func: The method to comppute the loss on the labelled batch.
-                Expects a callable with signature f(pred, true) to compute
-                the loss on the supervised batch. Default: cross entropy
-            unsup_loss_func: a function with signature f(pred, true, mask) to
-                compute the loss on the unsupervised batch: Default: masked cross entropy
         """
         super().__init__()
 
@@ -70,20 +88,28 @@ class FixMatch(Algorithm):
         return o_lbl_w, o_ulbl_w, o_ulbl_s
 
 
-    def forward(self, model, lbl_batch, ulbl_batch, log_func=None):
+    def forward(self,
+                model:nn.Module,
+                lbl_batch:dict,
+                ulbl_batch:dict,
+                log_func:Optional[Callable[[dict], None]]=None):
         """
         Performs a forward pass of FixMatch
 
         Args:
-            model: The predictor model
-            lbl_batch: A dictionary containing the labelled batch. Expects keys
-                "weak", "strong" for augmented features, "y" for labels
-            ubl_batch: A dictionary with unlabelled data with keys. Expects keys
-                "weak", "strong" for augmented features.
-            log_func: A function which accepts a dictionary containing some
-                training information
+            model (nn.Module):
+                The classification model
+            lbl_batch (dict):
+                A dictionary containing the labelled batch. Expects keys "weak", "strong" for
+                augmented features, "y" for labels
+            ubl_batch (dict):
+                A dictionary with unlabelled data with keys. Expects keys "weak", "strong" for
+                augmented features, and "idx" for data indices
+            log_func (Callable[[dict], None]):
+                A function which accepts a dictionary containing training information for the batch.
+                The keys in the dictionary are "sup_loss", "unsup_loss", "total_loss",
+                "confidences", "pseudo_labels", "mask"
         """
-
         # model outputs on labelled/unlabelled examples with augmentations
         o_lbl_w, o_ulbl_w, o_ulbl_s = self._model_outputs(model, lbl_batch, ulbl_batch)
 

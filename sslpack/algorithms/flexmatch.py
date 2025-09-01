@@ -40,7 +40,7 @@ class FlexMatch(Algorithm):
         unsup_loss_func (Callable[[Tensor, Tensor, Tensor], Tensor], optional):
             a function with signature f(pred, true, mask) compute the loss on the unsupervised batch for only unmasked examples.
             Defaults to sslpack's masked cross entropy
-        device (Union): the device to store the state vectors
+        device (Union[device, str]): The torch device on which to store the FlexMatch state vectors
         """
     def __init__(self,
                  num_classes:int,
