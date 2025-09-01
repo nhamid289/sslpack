@@ -5,35 +5,56 @@ from sslpack.algorithms import Algorithm
 from sslpack.algorithms.utils import DistributionAlignment
 from sslpack.utils.criterions import ce_consistency_loss as cel
 
+from torch import Tensor, device
+from typing import Optional, Callable, Union
+
 class FlexMatch(Algorithm):
     """ An implementation of FlexMatch (http://arxiv.org/abs/2110.08263)
 
-    By default the algorithm uses cross entropy loss for the supervised part,
-    and cross entropy consistency loss for the unsupervised part.
-    """
+    FlexMatch uses pseudo-labelling and augmentation anchoring like FixMatch, but adaptively selects
+    the confidence threshold on a class-wise basis.
 
-    def __init__(self, num_classes, num_ulbl, lambda_u=1, conf_threshold=0.95, use_warmup=False, concat=True,
-                 use_dist_align=False, dist_align=None, sup_loss_func=None, unsup_loss_func=None,
-                 device = 'cpu'):
+    Args:
+        num_classes (int):
+            The number of classes. Expects positive integer > 0.
+        num_ulbl (int):
+            The number of unlabelled training examples. Expects positive integer > 0
+        lambda_u (float, optional):
+            The weight of the unlabelled loss in the total loss. Expects non-negative real >= 0. Defaults to 1.
+        conf_threshold (float, optional):
+            The default confidence threshold for pseudo-labels. Expects a float in [0, 1]. Defaults to 0.95
+        use_warmup (bool, optional):
+            If true, use threshold warmup when most data remains unseen. Default False.
+        concat (bool, optional):
+            If True, the labelled and unlabelled batches are concatenated, and a single forward pass of the model is performed.
+            If False, a separate forward pass is performed for each of the labelled and unlabelled batches.
+            Defaults to True.
+        use_dist_align (bool, optional):
+            If True, distribution alignment is performed on the weakly-augmented unlabelled output prior to pseudo-labelling. Defaults to False.
+        dist_align (Callable[[Tensor, Tensor], Tensor], optional):
+            The distribution alignment function used. Expects a callable with arguments f(probs_ulbl, probs_lbl) which
+            are normalised vectors with dimension matching num_classes. By default, the sslpack DistributionAlignment implementation is used.
+        sup_loss_func (Callable[[Tensor, Tensor], Tensor], optional):
+            a function with signature f(pred, true) to compute
+            the loss on the supervised batch. Defaults to torch cross_entropy
+        unsup_loss_func (Callable[[Tensor, Tensor, Tensor], Tensor], optional):
+            a function with signature f(pred, true, mask) compute the loss on the unsupervised batch for only unmasked examples.
+            Defaults to sslpack's masked cross entropy
+        device (Union): the device to store the state vectors
         """
-        Initialise a FlexMatch algorithm. FlexMatch requires access to data indices for unlabelled examples
-        to track the curriculum. This algorithm has a state, so must be reinitialised or reset() to clear
-        the state for training a new model.
+    def __init__(self,
+                 num_classes:int,
+                 num_ulbl:int,
+                 lambda_u:float=1,
+                 conf_threshold:float=0.95,
+                 use_warmup:bool=False,
+                 concat:bool=True,
+                 use_dist_align:bool=False,
+                 dist_align:Optional[Callable[[Tensor, Tensor], Tensor]]=None,
+                 sup_loss_func:Optional[Callable[[Tensor, Tensor], Tensor]]=None,
+                 unsup_loss_func:Optional[Callable[[Tensor, Tensor, Tensor], Tensor]]=None,
+                 device:Union[device, str]='cpu'):
 
-        Args:
-            num_classes: The number of classes in the data
-            num_ulbl: The total number of unlabelled examples in the training data
-            lambda_u: The weight of the unlabelled loss in the total loss.
-            conf_threshold: the confidence threshold for pseudo-labels
-            use_warmup: If true, use threshold warmup when unused data dominate
-            concat: If false, a separate forward pass is performed for unlabelled and labelled batches. Otherwise, the data is concanted and a single forward pass is performed.
-            dist_align: A function that accepts a probability distribution vector for alignment. If none, no alignment is applied.
-            sup_loss_func: a function with signature f(pred, true) to compute
-                the loss on the supervised batch. Default: cross entropy
-            unsup_loss_func: a function with signature f(pred, true, mask) to
-                compute the loss on the unsupervised batch: Default: masked cross entropy
-            device: the device to store the state vectors
-        """
         super().__init__()
 
         self.num_ulbl = num_ulbl
