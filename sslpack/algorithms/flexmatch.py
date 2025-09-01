@@ -2,6 +2,7 @@ import torch
 from torch.nn.functional import cross_entropy as ce
 
 from sslpack.algorithms import Algorithm
+from sslpack.algorithms.utils import DistributionAlignment
 from sslpack.utils.criterions import ce_consistency_loss as cel
 
 class FlexMatch(Algorithm):
@@ -12,7 +13,7 @@ class FlexMatch(Algorithm):
     """
 
     def __init__(self, num_classes, num_ulbl, lambda_u=1, conf_threshold=0.95, use_warmup=False, concat=True,
-                 dist_align = None,  sup_loss_func=None, unsup_loss_func=None,
+                 use_dist_align=False, dist_align=None, sup_loss_func=None, unsup_loss_func=None,
                  device = 'cpu'):
         """
         Initialise a FlexMatch algorithm. FlexMatch requires access to data indices for unlabelled examples
@@ -41,7 +42,11 @@ class FlexMatch(Algorithm):
         self.conf_threshold = conf_threshold
         self.use_warmup = use_warmup
         self.concat = concat
-        self.dist_align = dist_align
+        self.use_dist_align = use_dist_align
+        if dist_align is None:
+            self.dist_align = DistributionAlignment()
+        else:
+            self.dist_align = dist_align
         self.device = device
 
         self.sup_loss_func = ce if sup_loss_func is None else sup_loss_func
@@ -56,6 +61,25 @@ class FlexMatch(Algorithm):
 
         self.to(device)
 
+    def _model_outputs(self, model, lbl_batch, ulbl_batch):
+
+        lbl_size = lbl_batch["weak"].size(0)
+        ulbl_size = ulbl_batch["weak"].size(0)
+
+        if self.concat is True:
+            x = torch.concat([lbl_batch["weak"], ulbl_batch["weak"], ulbl_batch["strong"]])
+            o = model(x)
+            o_lbl_w = o[:lbl_size] # unconcat the outputs
+            o_ulbl_w = o[lbl_size: lbl_size + ulbl_size]
+            o_ulbl_s = o[lbl_size + ulbl_size:]
+        else:
+            o_lbl_w = model(lbl_batch["weak"])
+            o_ulbl_s = model(ulbl_batch["strong"])
+            with torch.no_grad():
+                o_ulbl_w = model(ulbl_batch["weak"])
+
+        return o_lbl_w, o_ulbl_w, o_ulbl_s
+
     def forward(self, model, lbl_batch, ulbl_batch, log_func=None):
         """
         Performs a forward pass of FixMatch
@@ -69,31 +93,19 @@ class FlexMatch(Algorithm):
             log_func: A function which accepts a dictionary containing some
                 training information
         """
-        if self.concat is True:
-            lbl_size = lbl_batch["weak"].size(0)
-            ulbl_size = ulbl_batch["weak"].size(0)
-            x = torch.concat([lbl_batch["weak"], ulbl_batch["weak"], ulbl_batch["strong"]])
-            out = model(x)
-            out_lbl_weak = out[:lbl_size] # unconcat the outputs
-            out_ulbl_weak = out[lbl_size: lbl_size + ulbl_size]
-            out_ulbl_strong = out[lbl_size + ulbl_size:]
-        else:
-            out_lbl_weak = model(lbl_batch["weak"])
-            out_ulbl_strong = model(ulbl_batch["strong"])
-            with torch.no_grad():
-                out_ulbl_weak = model(ulbl_batch["weak"])
+        # model outputs on labelled/unlabelled examples with augmentations
+        o_lbl_w, o_ulbl_w, o_ulbl_s = self._model_outputs(model, lbl_batch, ulbl_batch)
 
-        probs_ubl_weak = torch.softmax(out_ulbl_weak, dim=1)
-        probs_lbl_weak = torch.softmax(out_lbl_weak, dim=1)
+        probs_lbl_w, probs_ulbl_w = o_lbl_w.softmax(dim=1), o_ulbl_w.softmax(dim=1)
 
-        if self.dist_align is not None:
-            probs_ubl_weak = self.dist_align(probs_ubl_weak, probs_lbl_weak)
+        if self.use_dist_align is True:
+            probs_ulbl_w = self.dist_align(probs_ulbl_w, probs_lbl_w)
 
-        confs, pseudo_labels, mask = self.flex_mask(probs_ubl_weak)
+        confs, pseudo_labels, mask = self.flex_mask(probs_ulbl_w)
         self.update(confs, pseudo_labels, ulbl_batch["idx"])
 
-        sup_loss = self.sup_loss_func(out_lbl_weak, lbl_batch["y"])
-        unsup_loss = self.unsup_loss_func(out_ulbl_strong, pseudo_labels, mask)
+        sup_loss = self.sup_loss_func(o_lbl_w, lbl_batch["y"])
+        unsup_loss = self.unsup_loss_func(o_ulbl_s, pseudo_labels, mask)
         total_loss = sup_loss + self.lambda_u * unsup_loss
 
         if log_func is not None:

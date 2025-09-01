@@ -4,14 +4,14 @@ from sslpack.utils.criterions import ce_consistency_loss
 import torch
 import torch.nn.functional as F
 
-from sslpack.algorithms.utils import threshold_mask
+from sslpack.algorithms.utils import threshold_mask, DistributionAlignment
 
 class PseudoLabel(Algorithm):
     """
     An implementation of PseudoLabel algorithm for weakly supervised training.
     """
 
-    def __init__(self, lambda_u=1, conf_threshold=0.95, concat=True, dist_align=None,
+    def __init__(self, lambda_u=1, conf_threshold=0.95, concat=True, use_dist_align=False, dist_align=None,
                  max_pseudo_labels=None, sup_loss_func=None, unsup_loss_func=None):
         """
         Initialise a PseudoLabel algorithm
@@ -32,7 +32,11 @@ class PseudoLabel(Algorithm):
         self.conf_threshold = conf_threshold
         self.max_pseudo_labels = max_pseudo_labels
         self.concat = concat
-        self.dist_align = dist_align
+        self.use_dist_align = use_dist_align
+        if dist_align is None:
+            self.dist_align = DistributionAlignment()
+        else:
+            self.dist_align = dist_align
 
         if sup_loss_func is None:
             # Default reduction is 'mean'
@@ -73,7 +77,7 @@ class PseudoLabel(Algorithm):
         probs_ulbl = torch.softmax(out_ulbl, dim=1)
         probs_lbl = torch.softmax(out_lbl, dim=1)
 
-        if self.dist_align is not None:
+        if self.use_dist_align is True:
             probs_ulbl = self.dist_align(probs_ulbl, probs_lbl)
 
         # generate pseudo-labels
