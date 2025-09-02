@@ -5,6 +5,25 @@ import numpy as np
 
 
 class BasicDataset(Dataset):
+    """
+    An sslpack BasicDataset to store features and (optionally) labels.
+
+    Args:
+        X:
+            The features
+        y (optional):
+            The labels (if applicable)
+        transform (optional):
+            The transform to apply to the features X when accessed. If unspecified, no transform is applied.
+        return_idx (bool):
+            If true, the index of observations is available with key "idx". Defaults to False.
+
+    Elements are returned as a dictionary with keys
+    - "X": The features (after applying the transformation)
+    - "y": The label (if applicable)
+    - "idx": The data index (if return_idx=True)
+
+    """
     def __init__(self, X, y=None, transform=None, return_idx=False):
         self.X = X
         self.y = y
@@ -40,7 +59,30 @@ class BasicDataset(Dataset):
 
 class TransformDataset(Dataset):
     """
-    A class to store a dataset and apply any transformations to the data
+    An sslpack TransformDataset to store features and (optionally) labels.
+    Compared to BasicDataset, TransformDataset is designed for augmentation anchoring methods, with support for two augmentations.
+
+    Args:
+        X:
+            The features
+        y (optional):
+            The labels (if applicable)
+        transform (optional):
+            The basic transform to apply to the features. Access with "X". If unspecified, no transform is applied.
+        weak_transform (optional):
+            The weak transform to apply to the features. Access with "weak". Defaults to basic transform if unspecified.
+        transform (optional):
+            The strong transform to apply to the features. Access with "strong". Defaults to basic transform if unspecified.
+        return_X_y (bool):
+            If true, rather than a dictionary, outputs are returned in a tuple (X, X_weak, X_strong, y). Defaults to False.
+        return_idx (bool):
+            If true, the index of observations is available with key "idx". Defaults to False.
+
+    Elements are returned as a dictionary with keys
+    - "X": The features (after applying the transformation)
+    - "y": The label (if applicable)
+    - "idx": The data index (if return_idx=True)
+
     """
 
     def __init__(
@@ -89,17 +131,6 @@ class TransformDataset(Dataset):
         return len(self.X)
 
     def __getitem__(self, index):
-        """
-        Returns an item from the dataset with any transformations applied
-
-        Args:
-            index: The index of the observation to return
-        Returns:
-            A 5-tuple (X, y, X_w, X_m, X_s) of the original data, label,
-            medium and strong transformed data. If a weak transform is not
-            specified, return the unmodified observation. If the data is
-            unlabelled, or medium/strong is not specified, these all are None
-        """
         X = self.X[index]
         y = self.y[index] if self.y is not None else None
 
