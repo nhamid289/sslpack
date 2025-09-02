@@ -12,10 +12,12 @@ class MedMnist(SSLDataset):
 
     def __init__(
         self,
-        medmnist,
+        medmnist_class,
         data_dir,
         lbls_per_class,
         ulbls_per_class=None,
+        val_per_class=None,
+        eval_per_class=None,
         img_size=28,
         seed=None,
         return_idx=False,
@@ -25,11 +27,40 @@ class MedMnist(SSLDataset):
         download=False,
     ):
 
-        os.makedirs(data_dir, exist_ok=True)
+        self.medmnist_class = medmnist_class
+        self.data_dir = data_dir
+        self.lbls_per_class = lbls_per_class
+        self.ulbls_per_class = ulbls_per_class
+        self.val_per_class = val_per_class
+        self.eval_per_class = eval_per_class
+        self.seed = seed
+        self.img_size = img_size
+        self.return_idx = return_idx
+        self.return_ulbl_labels = return_ulbl_labels
+        self.crop_size = crop_size
+        self.crop_ratio = crop_ratio
+        self.download = download
 
-        tr = medmnist(root=data_dir, split="train", download=download, size=img_size)
-        ts = medmnist(root=data_dir, split="test", download=download, size=img_size)
-        val = medmnist(root=data_dir, split="val", download=download, size=img_size)
+        os.makedirs(data_dir, exist_ok=True)
+        X_tr, y_tr, X_val, y_val, X_ts, y_ts = self._preprocess_data()
+        self.X_mean, self.X_std = X_tr.mean(), X_tr.std()
+        self._define_transforms()
+        self._define_datasets(X_tr, y_tr, X_val, y_val, X_ts, y_ts)
+
+    def _check_import(self):
+        try:
+            import medmnist
+        except ImportError as e:
+            raise ImportError(
+                "This dataset requires `medmnist`. Install it with:\n"
+                "    pip install sslpack[medmnist]"
+            ) from e
+
+    def _preprocess_data(self):
+
+        tr = self.medmnist_class(root=self.data_dir, split="train", download=self.download, size=self.img_size)
+        ts = self.medmnist_class(root=self.data_dir, split="test", download=self.download, size=self.img_size)
+        val = self.medmnist_class(root=self.data_dir, split="val", download=self.download, size=self.img_size)
 
         X_tr, y_tr = torch.tensor(tr.imgs).float() / 255, torch.tensor(tr.labels)
         X_ts, y_ts = torch.tensor(ts.imgs).float() / 255, torch.tensor(ts.labels)
@@ -42,52 +73,56 @@ class MedMnist(SSLDataset):
 
         y_tr, y_ts, y_val = y_tr.squeeze(1), y_ts.squeeze(1), y_val.squeeze(1)
 
+        return X_tr, y_tr, X_val, y_val, X_ts, y_ts
+
+    def _define_transforms(self):
         self.weak_transform = transforms.Compose(
             [
                 transforms.ToPILImage(),
-                transforms.Resize(crop_size),
+                transforms.Resize(self.crop_size),
                 transforms.RandomCrop(
-                    crop_size,
-                    padding=int(crop_size * (1 - crop_ratio)),
+                    self.crop_size,
+                    padding=int(self.crop_size * (1 - self.crop_ratio)),
                     padding_mode="reflect",
                 ),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize(X_tr.mean(), X_tr.std()),
+                transforms.Normalize(self.X_mean, self.X_std),
             ]
         )
         self.strong_transform = transforms.Compose(
             [
                 transforms.ToPILImage(),
-                transforms.Resize(crop_size),
+                transforms.Resize(self.crop_size),
                 transforms.RandomCrop(
-                    crop_size,
-                    padding=int(crop_size * (1 - crop_ratio)),
+                    self.crop_size,
+                    padding=int(self.crop_size * (1 - self.crop_ratio)),
                     padding_mode="reflect",
                 ),
                 transforms.RandomHorizontalFlip(),
                 RandAugment(3, 5, exclude_color_aug=True, bw=True),
                 transforms.ToTensor(),
-                transforms.Normalize(X_tr.mean(), X_tr.std()),
+                transforms.Normalize(self.X_mean, self.X_std),
             ]
         )
 
         self.transform = transforms.Compose(
             [
-                transforms.Resize(crop_size),
-                transforms.Normalize(X_tr.mean(), X_tr.std()),
+                transforms.Resize(self.crop_size),
+                transforms.Normalize(self.X_mean, self.X_std),
             ]
         )
 
+    def _define_datasets(self, X_tr, y_tr, X_val, y_val, X_ts, y_ts):
         X_tr_lb, y_tr_lb, X_tr_ulb, y_tr_ulb = split_lb_ulb_balanced(
             X=X_tr,
             y=y_tr,
-            lbls_per_class=lbls_per_class,
-            ulbls_per_class=ulbls_per_class,
-            seed=seed,
+            lbls_per_class=self.lbls_per_class,
+            ulbls_per_class=self.ulbls_per_class,
+            seed=self.seed,
         )
 
-        if not return_ulbl_labels:
+        if self.return_ulbl_labels is False:
             y_tr_ulb = None
 
         self.lbl_dataset = TransformDataset(
@@ -96,7 +131,7 @@ class MedMnist(SSLDataset):
             transform=self.transform,
             weak_transform=self.weak_transform,
             strong_transform=self.strong_transform,
-            return_idx=return_idx,
+            return_idx=self.return_idx,
         )
 
         self.ulbl_dataset = TransformDataset(
@@ -105,14 +140,32 @@ class MedMnist(SSLDataset):
             transform=self.transform,
             weak_transform=self.weak_transform,
             strong_transform=self.strong_transform,
-            return_idx=return_idx,
+            return_idx=self.return_idx,
         )
 
+        if self.val_per_class is not None:
+            # using this function to obtain a small validation set with labels per class
+            X_val, y_val, _, _ = split_lb_ulb_balanced(
+                X=X_val,
+                y=y_val,
+                lbls_per_class=self.val_per_class,
+                seed=self.seed,
+            )
         self.val_dataset = BasicDataset(
-            X_val, y_val, transform=self.transform, return_idx=return_idx
+            X_val, y_val, transform=self.transform, return_idx=self.return_idx
         )
+
+        if self.eval_per_class is not None:
+            # using this function to obtain a small validation set with labels per class
+            X_ts, y_ts, _, _ = split_lb_ulb_balanced(
+                X=X_ts,
+                y=y_ts,
+                lbls_per_class=self.eval_per_class,
+                seed=self.seed,
+            )
+
         self.eval_dataset = BasicDataset(
-            X_ts, y_ts, transform=self.transform, return_idx=return_idx
+            X_ts, y_ts, transform=self.transform, return_idx=self.return_idx
         )
 
     def _permute(self, X):
@@ -125,6 +178,8 @@ class BloodMnist(MedMnist):
         data_dir,
         lbls_per_class,
         ulbls_per_class=None,
+        val_per_class=None,
+        eval_per_class=None,
         img_size=28,
         seed=None,
         return_idx=False,
@@ -155,19 +210,16 @@ class BloodMnist(MedMnist):
             return_idx: If true, the indices are returned when accessing a dataset
             download: If true, the dataset is downloaded if it does not already exist
         """
-        try:
-            from medmnist import BloodMNIST
-        except ImportError as e:
-            raise ImportError(
-                "This dataset requires `medmnist`. Install it with:\n"
-                "    pip install sslpack[medmnist]"
-            ) from e
+        self._check_import()
+        from medmnist import BloodMNIST
 
         super().__init__(
             BloodMNIST,
             data_dir,
             lbls_per_class,
             ulbls_per_class,
+            val_per_class,
+            eval_per_class,
             img_size,
             seed,
             return_idx,
@@ -179,12 +231,50 @@ class BloodMnist(MedMnist):
 
 
 class PathMnist(MedMnist):
+    """
+
+    PathMNIST is a colon pathology medical imaging dataset for image classification.
+    There are 107,180 total examples with 9 classes, and all features are normalised.
+    The train/val/test split is 89,996 / 10,004 / 7,180
+    The training data is split into labelled and unlabelled parts.
+
+    Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
+    Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
+
+
+    Args:
+        data_dir (str):
+            The directory where the data is saved, or where it will be saved to if download=True
+        lbls_per_class (int):
+            The number of labelled observations to include per class. Expects a positive integer > 0
+        ulbls_per_class (int, optional):
+            The number of unlabelled observations to include per class. If unspecified, all
+            remaining examples after selecting the labelled examples are used. By default unspecified.
+        img_size (int):
+            The image size of the dataset. Defaults to the 28x28 version of the dataset.
+            Specify 64, 128 or 224 for MedMNIST+ datasets.
+        seed (int, optional):
+            The seed for randomly choosing the labelled instances
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        return_ulbl_labels (bool):
+            If True, the labels for the unlabelled data are included. Defaults to False.
+        return_idx (bool):
+            If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        download (bool):
+            If True, the dataset is downloaded if it does not already exist in the specified directory.
+            If False, an error will occur unless the dataset already exists. Defaults to False.
+    """
 
     def __init__(
         self,
         data_dir,
         lbls_per_class,
         ulbls_per_class=None,
+        val_per_class=None,
+        eval_per_class=None,
         img_size=28,
         seed=None,
         return_idx=False,
@@ -228,6 +318,8 @@ class PathMnist(MedMnist):
             data_dir,
             lbls_per_class,
             ulbls_per_class,
+            val_per_class,
+            eval_per_class,
             img_size,
             seed,
             return_idx,
@@ -245,6 +337,8 @@ class ChestMnist(MedMnist):
         data_dir,
         lbls_per_class,
         ulbls_per_class=None,
+        val_per_class=None,
+        eval_per_class=None,
         img_size=28,
         seed=None,
         return_idx=False,
@@ -288,6 +382,8 @@ class ChestMnist(MedMnist):
             data_dir,
             lbls_per_class,
             ulbls_per_class,
+            val_per_class,
+            eval_per_class,
             img_size,
             seed,
             return_idx,
@@ -305,6 +401,8 @@ class DermaMnist(MedMnist):
         data_dir,
         lbls_per_class,
         ulbls_per_class=None,
+        val_per_class=None,
+        eval_per_class=None,
         img_size=28,
         seed=None,
         return_idx=False,
@@ -348,6 +446,8 @@ class DermaMnist(MedMnist):
             data_dir,
             lbls_per_class,
             ulbls_per_class,
+            val_per_class,
+            eval_per_class,
             img_size,
             seed,
             return_idx,
@@ -365,6 +465,8 @@ class BreastMnist(MedMnist):
         data_dir,
         lbls_per_class,
         ulbls_per_class=None,
+        val_per_class=None,
+        eval_per_class=None,
         img_size=28,
         seed=None,
         return_idx=False,
@@ -408,6 +510,8 @@ class BreastMnist(MedMnist):
             data_dir,
             lbls_per_class,
             ulbls_per_class,
+            val_per_class,
+            eval_per_class,
             img_size,
             seed,
             return_idx,
@@ -419,63 +523,3 @@ class BreastMnist(MedMnist):
 
     def _permute(self, X):
         return X.permute(0, 1, 2)
-
-
-class BloodMnist(MedMnist):
-
-    def __init__(
-        self,
-        data_dir,
-        lbls_per_class,
-        ulbls_per_class=None,
-        img_size=28,
-        seed=None,
-        return_idx=False,
-        return_ulbl_labels=False,
-        crop_size=28,
-        crop_ratio=1,
-        download=True,
-    ):
-        """
-        Initialise an BloodMNIST SSL dataset.  Contains a labelled, unlabelled , validation, evaluation dataset. All features are normalised.
-
-        Elements from the datasets are return as dictionaries with keys
-            "X": The original features as a tensor
-            "weak": The weak augmentation applied to the features
-            "strong": The strong augmentation applied to the features
-            "y": The labels, if applicable
-            "idx": The dataset index. This key is only returned if return_ulbl_labels=True
-
-        Args:
-            data_dir: The directory where the data is saved, or where it will be saved to if download=True
-            lbls_per_class: The number of labelled observations to include per class
-            ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
-            img_size: By default, use MedMNIST with 28x28. Specify 64, 128 or 224 for MedMNIST+ datasets.
-            seed: The seed for randomly choosing the labelled instances
-            crop_size: The length/width of crop size for resizing (square) during augmentations
-            crop_ratio: The crop ratio used for padding when cropping during augmentations
-            return_ulbl_labels: If true, the labels for the unlabelled data are included
-            return_idx: If true, the indices are returned when accessing a dataset
-            download: If true, the dataset is downloaded if it does not already exist
-        """
-        try:
-            from medmnist import BloodMNIST
-        except ImportError as e:
-            raise ImportError(
-                "This dataset requires `medmnist`. Install it with:\n"
-                "    pip install sslpack[medmnist]"
-            ) from e
-
-        super().__init__(
-            BloodMNIST,
-            data_dir,
-            lbls_per_class,
-            ulbls_per_class,
-            img_size,
-            seed,
-            return_idx,
-            return_ulbl_labels,
-            crop_size,
-            crop_ratio,
-            download,
-        )
