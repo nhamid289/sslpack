@@ -1,4 +1,4 @@
-from sslpack.datasets import Dataset
+from sslpack.datasets import SSLDataset
 import torch
 from torchvision import transforms
 from sslpack.utils.data import TransformDataset, BasicDataset
@@ -8,7 +8,7 @@ from sslpack.utils.augmentation import RandAugment
 import os
 
 
-class MedMnist(Dataset):
+class MedMnist(SSLDataset):
 
     def __init__(
         self,

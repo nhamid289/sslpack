@@ -3,12 +3,12 @@ from torchvision.datasets import CIFAR10, CIFAR100
 from torchvision import transforms
 from PIL import Image
 
-from sslpack.datasets import Dataset
+from sslpack.datasets import SSLDataset
 from sslpack.utils.data import TransformDataset, BasicDataset, split_lb_ulb_balanced
 from sslpack.utils.augmentation import RandAugment
 
 
-class Cifar(Dataset):
+class Cifar(SSLDataset):
 
     def __init__(
         self,

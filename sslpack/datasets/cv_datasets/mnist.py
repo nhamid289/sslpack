@@ -1,4 +1,4 @@
-from sslpack.datasets import Dataset
+from sslpack.datasets import SSLDataset
 from torchvision.datasets import MNIST as MN
 import torch
 from torch.utils.data import random_split
@@ -8,7 +8,7 @@ from sslpack.utils.data import split_lb_ulb_balanced
 from sslpack.utils.augmentation import RandAugment
 
 
-class Mnist(Dataset):
+class Mnist(SSLDataset):
 
     def __init__(
         self,
