@@ -15,8 +15,8 @@ class Mnist(SSLDataset):
         data_dir,
         lbls_per_class,
         ulbls_per_class=None,
-        val_lbls_per_class=None,
-        eval_lbls_per_class=None,
+        val_per_class=None,
+        eval_per_class=None,
         seed=None,
         return_idx=False,
         return_ulbl_labels=False,
@@ -48,15 +48,35 @@ class Mnist(SSLDataset):
             download: If true, the dataset is downloaded if it does not already exist
         """
 
-        mnist_tr = MN(root=data_dir, train=True, download=download)
-        mnist_ts = MN(root=data_dir, train=False, download=download)
+        self.data_dir = data_dir
+        self.lbls_per_class = lbls_per_class
+        self.ulbls_per_class = ulbls_per_class
+        self.val_per_class = val_per_class
+        self.eval_per_class = eval_per_class
+        self.seed = seed
+        self.return_idx = return_idx
+        self.return_ulbl_labels = return_ulbl_labels
+        self.crop_size = crop_size
+        self.crop_ratio = crop_ratio
+        self.val_size = val_size
+        self.download = download
 
-        num_val = int(val_size*len(mnist_tr))
-        if seed is None:
+
+        X_tr, y_tr, X_val, y_val, X_ts, y_ts = self._preprocess_data()
+        self.X_mean, self.X_std = X_tr.mean(), X_tr.std()
+        self._define_transforms()
+        self._define_datasets(X_tr, y_tr, X_val, y_val, X_ts, y_ts)
+
+    def _preprocess_data(self):
+        mnist_tr = MN(root=self.data_dir, train=True, download=self.download)
+        mnist_ts = MN(root=self.data_dir, train=False, download=self.download)
+
+        num_val = int(self.val_size*len(mnist_tr))
+        if self.seed is None:
             idx = torch.randperm(len(mnist_tr))
         else:
             idx = torch.randperm(len(mnist_tr),
-                                 generator=torch.Generator().manual_seed(seed))
+                                 generator=torch.Generator().manual_seed(self.seed))
         idx_val, idx_tr = idx[:num_val], idx[num_val:]
 
         X, y = mnist_tr.data.float() / 255, mnist_tr.targets
@@ -66,19 +86,56 @@ class Mnist(SSLDataset):
 
         X_tr, X_ts, X_val = X_tr.unsqueeze(1), X_ts.unsqueeze(1), X_val.unsqueeze(1)
 
-        X_mean, X_std = X_tr.mean(), X_tr.std()
+        return X_tr, y_tr, X_val, y_val, X_ts, y_ts
 
-        self._define_transforms(X_mean, X_std, crop_size, crop_ratio)
+    def _define_transforms(self):
+        self.weak_transform = transforms.Compose(
+            [
+                transforms.ToPILImage(),
+                transforms.Resize(self.crop_size),
+                transforms.RandomCrop(
+                    self.crop_size,
+                    padding=int(self.crop_size * (1 - self.crop_ratio)),
+                    padding_mode="reflect",
+                ),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(self.X_mean, self.X_std),
+            ]
+        )
+        self.strong_transform = transforms.Compose(
+            [
+                transforms.ToPILImage(),
+                transforms.Resize(self.crop_size),
+                transforms.RandomCrop(
+                    self.crop_size,
+                    padding=int(self.crop_size * (1 - self.crop_ratio)),
+                    padding_mode="reflect",
+                ),
+                transforms.RandomHorizontalFlip(),
+                RandAugment(3, 5, exclude_color_aug=True, bw=True),
+                transforms.ToTensor(),
+                transforms.Normalize(self.X_mean, self.X_std),
+            ]
+        )
 
+        self.transform = transforms.Compose(
+            [
+                transforms.Resize(self.crop_size),
+                transforms.Normalize(self.X_mean, self.X_std),
+            ]
+        )
+
+    def _define_datasets(self, X_tr, y_tr, X_val, y_val, X_ts, y_ts):
         X_tr_lb, y_tr_lb, X_tr_ulb, y_tr_ulb = split_lb_ulb_balanced(
             X=X_tr,
             y=y_tr,
-            lbls_per_class=lbls_per_class,
-            ulbls_per_class=ulbls_per_class,
-            seed=seed,
+            lbls_per_class=self.lbls_per_class,
+            ulbls_per_class=self.ulbls_per_class,
+            seed=self.seed,
         )
 
-        if not return_ulbl_labels:
+        if self.return_ulbl_labels is False:
             y_tr_ulb = None
 
         self.lbl_dataset = TransformDataset(
@@ -87,7 +144,7 @@ class Mnist(SSLDataset):
             transform=self.transform,
             weak_transform=self.weak_transform,
             strong_transform=self.strong_transform,
-            return_idx=return_idx,
+            return_idx=self.return_idx,
         )
 
         self.ulbl_dataset = TransformDataset(
@@ -96,53 +153,30 @@ class Mnist(SSLDataset):
             transform=self.transform,
             weak_transform=self.weak_transform,
             strong_transform=self.strong_transform,
-            return_idx=return_idx,
+            return_idx=self.return_idx,
         )
 
-        X_ts, y_ts = X_ts.float(), y_ts.float()
+        if self.val_per_class is not None:
+            # using this function to obtain a small validation set with labels per class
+            X_val, y_val, _, _ = split_lb_ulb_balanced(
+                X=X_val,
+                y=y_val,
+                lbls_per_class=self.val_per_class,
+                seed=self.seed,
+            )
+        self.val_dataset = BasicDataset(
+            X_val, y_val, transform=self.transform, return_idx=self.return_idx
+        )
+
+        if self.eval_per_class is not None:
+            # using this function to obtain a small validation set with labels per class
+            X_ts, y_ts, _, _ = split_lb_ulb_balanced(
+                X=X_ts,
+                y=y_ts,
+                lbls_per_class=self.eval_per_class,
+                seed=self.seed,
+            )
 
         self.eval_dataset = BasicDataset(
-            X_ts, y_ts, transform=self.transform, return_idx=return_idx
-        )
-
-        self.val_dataset = BasicDataset(
-            X_val, y_val, transform=self.transform, return_idx=return_idx
-        )
-
-    def _define_transforms(self, X_mean, X_std, crop_size, crop_ratio):
-        self.weak_transform = transforms.Compose(
-            [
-                transforms.ToPILImage(),
-                transforms.Resize(crop_size),
-                transforms.RandomCrop(
-                    crop_size,
-                    padding=int(crop_size * (1 - crop_ratio)),
-                    padding_mode="reflect",
-                ),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize(X_mean, X_std),
-            ]
-        )
-        self.strong_transform = transforms.Compose(
-            [
-                transforms.ToPILImage(),
-                transforms.Resize(crop_size),
-                transforms.RandomCrop(
-                    crop_size,
-                    padding=int(crop_size * (1 - crop_ratio)),
-                    padding_mode="reflect",
-                ),
-                transforms.RandomHorizontalFlip(),
-                RandAugment(3, 5, exclude_color_aug=True, bw=True),
-                transforms.ToTensor(),
-                transforms.Normalize(X_mean, X_std),
-            ]
-        )
-
-        self.transform = transforms.Compose(
-            [
-                transforms.Resize(crop_size),
-                transforms.Normalize(X_mean, X_std),
-            ]
+            X_ts, y_ts, transform=self.transform, return_idx=self.return_idx
         )
