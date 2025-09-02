@@ -15,6 +15,8 @@ class Mnist(SSLDataset):
         data_dir,
         lbls_per_class,
         ulbls_per_class=None,
+        val_lbls_per_class=None,
+        eval_lbls_per_class=None,
         seed=None,
         return_idx=False,
         return_ulbl_labels=False,
@@ -64,42 +66,9 @@ class Mnist(SSLDataset):
 
         X_tr, X_ts, X_val = X_tr.unsqueeze(1), X_ts.unsqueeze(1), X_val.unsqueeze(1)
 
-        self.weak_transform = transforms.Compose(
-            [
-                transforms.ToPILImage(),
-                transforms.Resize(crop_size),
-                transforms.RandomCrop(
-                    crop_size,
-                    padding=int(crop_size * (1 - crop_ratio)),
-                    padding_mode="reflect",
-                ),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize(X_tr.mean(), X_tr.std()),
-            ]
-        )
-        self.strong_transform = transforms.Compose(
-            [
-                transforms.ToPILImage(),
-                transforms.Resize(crop_size),
-                transforms.RandomCrop(
-                    crop_size,
-                    padding=int(crop_size * (1 - crop_ratio)),
-                    padding_mode="reflect",
-                ),
-                transforms.RandomHorizontalFlip(),
-                RandAugment(3, 5, exclude_color_aug=True, bw=True),
-                transforms.ToTensor(),
-                transforms.Normalize(X_tr.mean(), X_tr.std()),
-            ]
-        )
+        X_mean, X_std = X_tr.mean(), X_tr.std()
 
-        self.transform = transforms.Compose(
-            [
-                transforms.Resize(crop_size),
-                transforms.Normalize(X_tr.mean(), X_tr.std()),
-            ]
-        )
+        self._define_transforms(X_mean, X_std, crop_size, crop_ratio)
 
         X_tr_lb, y_tr_lb, X_tr_ulb, y_tr_ulb = split_lb_ulb_balanced(
             X=X_tr,
@@ -138,4 +107,42 @@ class Mnist(SSLDataset):
 
         self.val_dataset = BasicDataset(
             X_val, y_val, transform=self.transform, return_idx=return_idx
+        )
+
+    def _define_transforms(self, X_mean, X_std, crop_size, crop_ratio):
+        self.weak_transform = transforms.Compose(
+            [
+                transforms.ToPILImage(),
+                transforms.Resize(crop_size),
+                transforms.RandomCrop(
+                    crop_size,
+                    padding=int(crop_size * (1 - crop_ratio)),
+                    padding_mode="reflect",
+                ),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(X_mean, X_std),
+            ]
+        )
+        self.strong_transform = transforms.Compose(
+            [
+                transforms.ToPILImage(),
+                transforms.Resize(crop_size),
+                transforms.RandomCrop(
+                    crop_size,
+                    padding=int(crop_size * (1 - crop_ratio)),
+                    padding_mode="reflect",
+                ),
+                transforms.RandomHorizontalFlip(),
+                RandAugment(3, 5, exclude_color_aug=True, bw=True),
+                transforms.ToTensor(),
+                transforms.Normalize(X_mean, X_std),
+            ]
+        )
+
+        self.transform = transforms.Compose(
+            [
+                transforms.Resize(crop_size),
+                transforms.Normalize(X_mean, X_std),
+            ]
         )
