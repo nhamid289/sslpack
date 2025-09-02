@@ -172,7 +172,48 @@ class MedMnist(SSLDataset):
         return X.permute(0, 3, 1, 2)
 
 class BloodMnist(MedMnist):
+    """
+    BloodMNIST is a blood cell medical imaging dataset for image classification.
 
+    There are 17,092 total examples with 8 classes, and all features are normalised.
+
+    The train/val/test split is 11,959 / 1,712 / 3,421.
+    The training data is split into labelled and unlabelled parts.
+
+    Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
+    Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
+
+    Args:
+        data_dir (str):
+            The directory where the data is saved, or where it will be saved to if download=True
+        lbls_per_class (int):
+            The number of labelled observations to include per class. Expects a positive integer > 0
+        ulbls_per_class (int, optional):
+            The number of unlabelled observations to include per class. If unspecified, all
+            remaining examples after selecting the labelled examples are used. By default unspecified.
+        val_per_class (int, optional):
+            The number of observations per class to use in the validation set. If unspecified, the entire
+            validation set is used. By default unspecified. Expects an integer > 0
+        eval_per_class (int, optional):
+            The number of observations per class to use in the evaluation set. If unspecified, the entire
+            evaluation set is used. By default unspecified. Expects an integer > 0
+        img_size (int):
+            The image size of the dataset. Defaults to the 28x28 version of the dataset.
+            Specify 64, 128 or 224 for MedMNIST+ datasets.
+        seed (int, optional):
+            The seed for randomly choosing the labelled instances
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        return_ulbl_labels (bool):
+            If True, the labels for the unlabelled data are included. Defaults to False.
+        return_idx (bool):
+            If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        download (bool):
+            If True, the dataset is downloaded if it does not already exist in the specified directory.
+            If False, an error will occur unless the dataset already exists. Defaults to False.
+    """
     def __init__(
         self,
         data_dir,
@@ -188,28 +229,6 @@ class BloodMnist(MedMnist):
         crop_ratio=1,
         download=True,
     ):
-        """
-        Initialise an BloodMNIST SSL dataset.  Contains a labelled, unlabelled , validation, evaluation dataset. All features are normalised.
-
-        Elements from the datasets are return as dictionaries with keys
-            "X": The original features as a tensor
-            "weak": The weak augmentation applied to the features
-            "strong": The strong augmentation applied to the features
-            "y": The labels, if applicable
-            "idx": The dataset index. This key is only returned if return_ulbl_labels=True
-
-        Args:
-            data_dir: The directory where the data is saved, or where it will be saved to if download=True
-            lbls_per_class: The number of labelled observations to include per class
-            ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
-            img_size: By default, use MedMNIST with 28x28. Specify 64, 128 or 224 for MedMNIST+ datasets.
-            seed: The seed for randomly choosing the labelled instances
-            crop_size: The length/width of crop size for resizing (square) during augmentations
-            crop_ratio: The crop ratio used for padding when cropping during augmentations
-            return_ulbl_labels: If true, the labels for the unlabelled data are included
-            return_idx: If true, the indices are returned when accessing a dataset
-            download: If true, the dataset is downloaded if it does not already exist
-        """
         self._check_import()
         from medmnist import BloodMNIST
 
@@ -232,10 +251,11 @@ class BloodMnist(MedMnist):
 
 class PathMnist(MedMnist):
     """
-
     PathMNIST is a colon pathology medical imaging dataset for image classification.
+
     There are 107,180 total examples with 9 classes, and all features are normalised.
-    The train/val/test split is 89,996 / 10,004 / 7,180
+
+    The train/val/test split is 89,996 / 10,004 / 7,180.
     The training data is split into labelled and unlabelled parts.
 
     Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
@@ -250,6 +270,12 @@ class PathMnist(MedMnist):
         ulbls_per_class (int, optional):
             The number of unlabelled observations to include per class. If unspecified, all
             remaining examples after selecting the labelled examples are used. By default unspecified.
+        val_per_class (int, optional):
+            The number of observations per class to use in the validation set. If unspecified, the entire
+            validation set is used. By default unspecified. Expects an integer > 0
+        eval_per_class (int, optional):
+            The number of observations per class to use in the evaluation set. If unspecified, the entire
+            evaluation set is used. By default unspecified. Expects an integer > 0
         img_size (int):
             The image size of the dataset. Defaults to the 28x28 version of the dataset.
             Specify 64, 128 or 224 for MedMNIST+ datasets.
@@ -283,35 +309,9 @@ class PathMnist(MedMnist):
         crop_ratio=1,
         download=True,
     ):
-        """
-        Initialise an PathMNIST SSL dataset.  Contains a labelled, unlabelled , validation, evaluation dataset. All features are normalised.
 
-        Elements from the datasets are return as dictionaries with keys
-            "X": The original features as a tensor
-            "weak": The weak augmentation applied to the features
-            "strong": The strong augmentation applied to the features
-            "y": The labels, if applicable
-            "idx": The dataset index. This key is only returned if return_ulbl_labels=True
-
-        Args:
-            data_dir: The directory where the data is saved, or where it will be saved to if download=True
-            lbls_per_class: The number of labelled observations to include per class
-            ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
-            img_size: By default, use MedMNIST with 28x28. Specify 64, 128 or 224 for MedMNIST+ datasets.
-            seed: The seed for randomly choosing the labelled instances
-            crop_size: The length/width of crop size for resizing (square) during augmentations
-            crop_ratio: The crop ratio used for padding when cropping during augmentations
-            return_ulbl_labels: If true, the labels for the unlabelled data are included
-            return_idx: If true, the indices are returned when accessing a dataset
-            download: If true, the dataset is downloaded if it does not already exist
-        """
-        try:
-            from medmnist import PathMNIST
-        except ImportError as e:
-            raise ImportError(
-                "This dataset requires `medmnist`. Install it with:\n"
-                "    pip install sslpack[medmnist]"
-            ) from e
+        self._check_import()
+        from medmnist import PathMNIST
 
         super().__init__(
             PathMNIST,
@@ -331,7 +331,49 @@ class PathMnist(MedMnist):
 
 
 class ChestMnist(MedMnist):
+    """
+    ChestMNIST is a chest x-ray medical imaging dataset for image classification.
 
+    There are 112,120 total examples with 14 classes, and all features are normalised.
+
+    The train/val/test split is 78,468 / 11,219 / 22,433.
+    The training data is split into labelled and unlabelled parts.
+
+    Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
+    Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
+
+
+    Args:
+        data_dir (str):
+            The directory where the data is saved, or where it will be saved to if download=True
+        lbls_per_class (int):
+            The number of labelled observations to include per class. Expects a positive integer > 0
+        ulbls_per_class (int, optional):
+            The number of unlabelled observations to include per class. If unspecified, all
+            remaining examples after selecting the labelled examples are used. By default unspecified.
+        val_per_class (int, optional):
+            The number of observations per class to use in the validation set. If unspecified, the entire
+            validation set is used. By default unspecified. Expects an integer > 0
+        eval_per_class (int, optional):
+            The number of observations per class to use in the evaluation set. If unspecified, the entire
+            evaluation set is used. By default unspecified. Expects an integer > 0
+        img_size (int):
+            The image size of the dataset. Defaults to the 28x28 version of the dataset.
+            Specify 64, 128 or 224 for MedMNIST+ datasets.
+        seed (int, optional):
+            The seed for randomly choosing the labelled instances
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        return_ulbl_labels (bool):
+            If True, the labels for the unlabelled data are included. Defaults to False.
+        return_idx (bool):
+            If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        download (bool):
+            If True, the dataset is downloaded if it does not already exist in the specified directory.
+            If False, an error will occur unless the dataset already exists. Defaults to False.
+    """
     def __init__(
         self,
         data_dir,
@@ -347,35 +389,8 @@ class ChestMnist(MedMnist):
         crop_ratio=1,
         download=True,
     ):
-        """
-        Initialise an ChestMNIST SSL dataset.  Contains a labelled, unlabelled , validation, evaluation dataset. All features are normalised.
-
-        Elements from the datasets are return as dictionaries with keys
-            "X": The original features as a tensor
-            "weak": The weak augmentation applied to the features
-            "strong": The strong augmentation applied to the features
-            "y": The labels, if applicable
-            "idx": The dataset index. This key is only returned if return_ulbl_labels=True
-
-        Args:
-            data_dir: The directory where the data is saved, or where it will be saved to if download=True
-            lbls_per_class: The number of labelled observations to include per class
-            ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
-            img_size: By default, use MedMNIST with 28x28. Specify 64, 128 or 224 for MedMNIST+ datasets.
-            seed: The seed for randomly choosing the labelled instances
-            crop_size: The length/width of crop size for resizing (square) during augmentations
-            crop_ratio: The crop ratio used for padding when cropping during augmentations
-            return_ulbl_labels: If true, the labels for the unlabelled data are included
-            return_idx: If true, the indices are returned when accessing a dataset
-            download: If true, the dataset is downloaded if it does not already exist
-        """
-        try:
-            from medmnist import ChestMNIST
-        except ImportError as e:
-            raise ImportError(
-                "This dataset requires `medmnist`. Install it with:\n"
-                "    pip install sslpack[medmnist]"
-            ) from e
+        self._check_import()
+        from medmnist import ChestMNIST
 
         super().__init__(
             ChestMNIST,
@@ -395,7 +410,49 @@ class ChestMnist(MedMnist):
 
 
 class DermaMnist(MedMnist):
+    """
+    DermaMNIST is a dermatoscope medical imaging dataset for image classification.
 
+    There are 10,015 total examples with 14 classes, and all features are normalised.
+
+    The train/val/test split is 7,007 / 1,003 / 2,005.
+    The training data is split into labelled and unlabelled parts.
+
+    Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
+    Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
+
+
+    Args:
+        data_dir (str):
+            The directory where the data is saved, or where it will be saved to if download=True
+        lbls_per_class (int):
+            The number of labelled observations to include per class. Expects a positive integer > 0
+        ulbls_per_class (int, optional):
+            The number of unlabelled observations to include per class. If unspecified, all
+            remaining examples after selecting the labelled examples are used. By default unspecified.
+        val_per_class (int, optional):
+            The number of observations per class to use in the validation set. If unspecified, the entire
+            validation set is used. By default unspecified. Expects an integer > 0
+        eval_per_class (int, optional):
+            The number of observations per class to use in the evaluation set. If unspecified, the entire
+            evaluation set is used. By default unspecified. Expects an integer > 0
+        img_size (int):
+            The image size of the dataset. Defaults to the 28x28 version of the dataset.
+            Specify 64, 128 or 224 for MedMNIST+ datasets.
+        seed (int, optional):
+            The seed for randomly choosing the labelled instances
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        return_ulbl_labels (bool):
+            If True, the labels for the unlabelled data are included. Defaults to False.
+        return_idx (bool):
+            If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        download (bool):
+            If True, the dataset is downloaded if it does not already exist in the specified directory.
+            If False, an error will occur unless the dataset already exists. Defaults to False.
+    """
     def __init__(
         self,
         data_dir,
@@ -411,35 +468,8 @@ class DermaMnist(MedMnist):
         crop_ratio=1,
         download=True,
     ):
-        """
-        Initialise an DermaMNIST SSL dataset.  Contains a labelled, unlabelled , validation, evaluation dataset. All features are normalised.
-
-        Elements from the datasets are return as dictionaries with keys
-            "X": The original features as a tensor
-            "weak": The weak augmentation applied to the features
-            "strong": The strong augmentation applied to the features
-            "y": The labels, if applicable
-            "idx": The dataset index. This key is only returned if return_ulbl_labels=True
-
-        Args:
-            data_dir: The directory where the data is saved, or where it will be saved to if download=True
-            lbls_per_class: The number of labelled observations to include per class
-            ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
-            img_size: By default, use MedMNIST with 28x28. Specify 64, 128 or 224 for MedMNIST+ datasets.
-            seed: The seed for randomly choosing the labelled instances
-            crop_size: The length/width of crop size for resizing (square) during augmentations
-            crop_ratio: The crop ratio used for padding when cropping during augmentations
-            return_ulbl_labels: If true, the labels for the unlabelled data are included
-            return_idx: If true, the indices are returned when accessing a dataset
-            download: If true, the dataset is downloaded if it does not already exist
-        """
-        try:
-            from medmnist import DermaMNIST
-        except ImportError as e:
-            raise ImportError(
-                "This dataset requires `medmnist`. Install it with:\n"
-                "    pip install sslpack[medmnist]"
-            ) from e
+        self._check_import()
+        from medmnist import DermaMNIST
 
         super().__init__(
             DermaMNIST,
@@ -459,7 +489,49 @@ class DermaMnist(MedMnist):
 
 
 class BreastMnist(MedMnist):
+    """
+    BreastMNIST is a breast ultrasound medical imaging dataset for image classification.
 
+    There are 780 total examples with 2 classes, and all features are normalised.
+
+    The train/val/test split is 546 / 78 / 156.
+    The training data is split into labelled and unlabelled parts.
+
+    Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
+    Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
+
+
+    Args:
+        data_dir (str):
+            The directory where the data is saved, or where it will be saved to if download=True
+        lbls_per_class (int):
+            The number of labelled observations to include per class. Expects a positive integer > 0
+        ulbls_per_class (int, optional):
+            The number of unlabelled observations to include per class. If unspecified, all
+            remaining examples after selecting the labelled examples are used. By default unspecified.
+        val_per_class (int, optional):
+            The number of observations per class to use in the validation set. If unspecified, the entire
+            validation set is used. By default unspecified. Expects an integer > 0
+        eval_per_class (int, optional):
+            The number of observations per class to use in the evaluation set. If unspecified, the entire
+            evaluation set is used. By default unspecified. Expects an integer > 0
+        img_size (int):
+            The image size of the dataset. Defaults to the 28x28 version of the dataset.
+            Specify 64, 128 or 224 for MedMNIST+ datasets.
+        seed (int, optional):
+            The seed for randomly choosing the labelled instances
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        return_ulbl_labels (bool):
+            If True, the labels for the unlabelled data are included. Defaults to False.
+        return_idx (bool):
+            If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        download (bool):
+            If True, the dataset is downloaded if it does not already exist in the specified directory.
+            If False, an error will occur unless the dataset already exists. Defaults to False.
+    """
     def __init__(
         self,
         data_dir,
@@ -475,35 +547,8 @@ class BreastMnist(MedMnist):
         crop_ratio=1,
         download=True,
     ):
-        """
-        Initialise an BreastMNIST SSL dataset.  Contains a labelled, unlabelled , validation, evaluation dataset. All features are normalised.
-
-        Elements from the datasets are return as dictionaries with keys
-            "X": The original features as a tensor
-            "weak": The weak augmentation applied to the features
-            "strong": The strong augmentation applied to the features
-            "y": The labels, if applicable
-            "idx": The dataset index. This key is only returned if return_ulbl_labels=True
-
-        Args:
-            data_dir: The directory where the data is saved, or where it will be saved to if download=True
-            lbls_per_class: The number of labelled observations to include per class
-            ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
-            img_size: By default, use MedMNIST with 28x28. Specify 64, 128 or 224 for MedMNIST+ datasets.
-            seed: The seed for randomly choosing the labelled instances
-            crop_size: The length/width of crop size for resizing (square) during augmentations
-            crop_ratio: The crop ratio used for padding when cropping during augmentations
-            return_ulbl_labels: If true, the labels for the unlabelled data are included
-            return_idx: If true, the indices are returned when accessing a dataset
-            download: If true, the dataset is downloaded if it does not already exist
-        """
-        try:
-            from medmnist import BreastMNIST
-        except ImportError as e:
-            raise ImportError(
-                "This dataset requires `medmnist`. Install it with:\n"
-                "    pip install sslpack[medmnist]"
-            ) from e
+        self._check_import()
+        from medmnist import BreastMNIST
 
         super().__init__(
             BreastMNIST,
