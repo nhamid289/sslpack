@@ -1,9 +1,7 @@
-import torch
-import numpy as np
 
-class Dataset:
+class SSLDataset:
     """
-    Interface for dataset class.
+    An interface to define SSL datasets
     """
 
     def __init__(self):
