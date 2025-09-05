@@ -18,6 +18,8 @@ class Cifar(SSLDataset):
         data_dir,
         lbls_per_class=4,
         ulbls_per_class=None,
+        val_per_class=None,
+        eval_per_class=None,
         seed=None,
         crop_size=32,
         crop_ratio=1,
@@ -31,6 +33,8 @@ class Cifar(SSLDataset):
         self.return_ulbl_labels = return_ulbl_labels
         self.return_idx = return_idx
         self.val_size = val_size
+        self.val_per_class = val_per_class
+        self.eval_per_class = eval_per_class
 
         self._define_transforms(crop_size, crop_ratio)
 
@@ -122,13 +126,32 @@ class Cifar(SSLDataset):
         X_ts, y_ts = test.data, torch.tensor(test.targets)
         X_ts = [Image.fromarray(x) for x in X_ts]
 
-        self.eval_dataset = BasicDataset(
-            X=X_ts, y=y_ts, transform=self.transform, return_idx=self.return_idx
-        )
+        if self.val_per_class is not None:
+            # using this function to obtain a small validation set with labels per class
+            X_val, y_val, _, _ = split_lb_ulb_balanced(
+                X=X_val,
+                y=y_val,
+                lbls_per_class=self.val_per_class,
+                seed=self.seed,
+            )
 
         self.val_dataset = BasicDataset(
             X=X_val, y=y_val, transform=self.transform, return_idx=self.return_idx
         )
+
+        self.eval_dataset = BasicDataset(
+            X=X_ts, y=y_ts, transform=self.transform, return_idx=self.return_idx
+        )
+
+        if self.eval_per_class is not None:
+            # using this function to obtain a small validation set with labels per class
+            X_ts, y_ts, _, _ = split_lb_ulb_balanced(
+                X=X_ts,
+                y=y_ts,
+                lbls_per_class=self.eval_per_class,
+                seed=self.seed,
+            )
+
 
 class Cifar10(Cifar):
     """
@@ -178,6 +201,8 @@ class Cifar10(Cifar):
         data_dir:str,
         lbls_per_class:int,
         ulbls_per_class:Optional[int]=None,
+        val_per_class:Optional[int]=None,
+        eval_per_class:Optional[int]=None,
         return_ulbl_labels:bool=False,
         return_idx:bool=False,
         seed:Optional[int]=None,
@@ -194,6 +219,8 @@ class Cifar10(Cifar):
             data_dir,
             lbls_per_class,
             ulbls_per_class,
+            val_per_class,
+            eval_per_class,
             seed,
             crop_size,
             crop_ratio,
@@ -252,6 +279,8 @@ class Cifar100(Cifar):
         data_dir:str,
         lbls_per_class:int,
         ulbls_per_class:Optional[int]=None,
+        val_per_class:Optional[int]=None,
+        eval_per_class:Optional[int]=None,
         return_ulbl_labels:bool=False,
         return_idx:bool=False,
         seed:Optional[int]=None,
@@ -269,6 +298,8 @@ class Cifar100(Cifar):
             data_dir,
             lbls_per_class,
             ulbls_per_class,
+            val_per_class,
+            eval_per_class,
             seed,
             crop_size,
             crop_ratio,
