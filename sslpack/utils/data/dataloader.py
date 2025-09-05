@@ -2,9 +2,9 @@ from torch.utils.data import DataLoader
 import torch
 
 
-class WeaklySupervisedLoader(DataLoader):
+class SSLDataLoader (DataLoader):
     """
-    An WeaklySupervisedLoader provides batches which contain both labelled and
+    An SSLDataLoader  provides batches which contain both labelled and
     unlabelled data.
     """
 
@@ -18,7 +18,7 @@ class WeaklySupervisedLoader(DataLoader):
         return NotImplementedError
 
 
-class MinimumLoader(WeaklySupervisedLoader):
+class MinimumLoader(SSLDataLoader ):
     """
     A dataloader which terminates after either the labelled or unlabelled
     has been exhausted.
@@ -65,7 +65,7 @@ class MinimumLoader(WeaklySupervisedLoader):
         return min(len(self.lbl_loader), len(self.ulbl_loader))
 
 
-class CyclicLoader(WeaklySupervisedLoader):
+class CyclicLoader(SSLDataLoader ):
     """
     A dataloader that continuously provides labelled and unlabelled batches.
     If either the labelled or unlabelled data is exhausted, it is reshuffled
