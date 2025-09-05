@@ -202,14 +202,14 @@ class BloodMnist(MedMnist):
             Specify 64, 128 or 224 for MedMNIST+ datasets.
         seed (int, optional):
             The seed for randomly choosing the labelled instances
-        crop_size (int):
-            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
-        crop_ratio (float):
-            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
         return_ulbl_labels (bool):
             If True, the labels for the unlabelled data are included. Defaults to False.
         return_idx (bool):
             If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
         download (bool):
             If True, the dataset is downloaded if it does not already exist in the specified directory.
             If False, an error will occur unless the dataset already exists. Defaults to False.
@@ -281,14 +281,14 @@ class PathMnist(MedMnist):
             Specify 64, 128 or 224 for MedMNIST+ datasets.
         seed (int, optional):
             The seed for randomly choosing the labelled instances
-        crop_size (int):
-            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
-        crop_ratio (float):
-            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
         return_ulbl_labels (bool):
             If True, the labels for the unlabelled data are included. Defaults to False.
         return_idx (bool):
             If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
         download (bool):
             If True, the dataset is downloaded if it does not already exist in the specified directory.
             If False, an error will occur unless the dataset already exists. Defaults to False.
@@ -362,14 +362,14 @@ class ChestMnist(MedMnist):
             Specify 64, 128 or 224 for MedMNIST+ datasets.
         seed (int, optional):
             The seed for randomly choosing the labelled instances
-        crop_size (int):
-            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
-        crop_ratio (float):
-            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
         return_ulbl_labels (bool):
             If True, the labels for the unlabelled data are included. Defaults to False.
         return_idx (bool):
             If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
         download (bool):
             If True, the dataset is downloaded if it does not already exist in the specified directory.
             If False, an error will occur unless the dataset already exists. Defaults to False.
@@ -441,14 +441,14 @@ class DermaMnist(MedMnist):
             Specify 64, 128 or 224 for MedMNIST+ datasets.
         seed (int, optional):
             The seed for randomly choosing the labelled instances
-        crop_size (int):
-            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
-        crop_ratio (float):
-            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
         return_ulbl_labels (bool):
             If True, the labels for the unlabelled data are included. Defaults to False.
         return_idx (bool):
             If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
         download (bool):
             If True, the dataset is downloaded if it does not already exist in the specified directory.
             If False, an error will occur unless the dataset already exists. Defaults to False.
@@ -520,14 +520,14 @@ class BreastMnist(MedMnist):
             Specify 64, 128 or 224 for MedMNIST+ datasets.
         seed (int, optional):
             The seed for randomly choosing the labelled instances
-        crop_size (int):
-            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
-        crop_ratio (float):
-            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
         return_ulbl_labels (bool):
             If True, the labels for the unlabelled data are included. Defaults to False.
         return_idx (bool):
             If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
         download (bool):
             If True, the dataset is downloaded if it does not already exist in the specified directory.
             If False, an error will occur unless the dataset already exists. Defaults to False.
