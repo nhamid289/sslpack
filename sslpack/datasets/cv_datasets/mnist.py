@@ -9,6 +9,37 @@ from sslpack.utils.augmentation import RandAugment
 
 
 class Mnist(SSLDataset):
+    """
+    MNIST is a handwriting image classification dataset.
+
+    Args:
+        data_dir (str):
+            The directory where the data is saved, or where it will be saved to if download=True
+        lbls_per_class (int):
+            The number of labelled observations to include per class. Expects a positive integer > 0
+        ulbls_per_class (int, optional):
+            The number of unlabelled observations to include per class. If unspecified, all
+            remaining examples after selecting the labelled examples are used. By default unspecified.
+        val_per_class (int, optional):
+            The number of observations per class to use in the validation set. If unspecified, the entire
+            validation set is used. By default unspecified. Expects an integer > 0
+        eval_per_class (int, optional):
+            The number of observations per class to use in the evaluation set. If unspecified, the entire
+            evaluation set is used. By default unspecified. Expects an integer > 0
+        seed (int, optional):
+            The seed for randomly choosing the labelled instances
+        return_ulbl_labels (bool):
+            If True, the labels for the unlabelled data are included. Defaults to False.
+        return_idx (bool):
+            If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        download (bool):
+            If True, the dataset is downloaded if it does not already exist in the specified directory.
+            If False, an error will occur unless the dataset already exists. Defaults to False.
+    """
 
     def __init__(
         self,
@@ -25,29 +56,6 @@ class Mnist(SSLDataset):
         val_size=1/6,
         download=False,
     ):
-        """
-        Initialise an MNIST SSL dataset.  Contains a labelled, unlabelled and evaluation dataset. All features are normalised.
-
-        Elements from the datasets are return as dictionaries with keys
-            "X": The original features as a tensor
-            "weak": The weak augmentation applied to the features
-            "strong": The strong augmentation applied to the features
-            "y": The labels, if applicable
-            "idx": The dataset index. This key is only returned if return_ulbl_labels=True
-
-        Args:
-            data_dir: The directory where the data is saved, or where it will be saved to if download=True
-            lbls_per_class: The number of labelled observations to include per class
-            ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
-            seed: The seed for randomly choosing the labelled instances
-            crop_size: The length/width of crop size for resizing (square) during augmentations
-            crop_ratio: The crop ratio used for padding when cropping during augmentations
-            return_ulbl_labels: If true, the labels for the unlabelled data are included
-            return_idx: If true, the indices are returned when accessing a dataset
-            val_size: The proportion of training data to use as validation set
-            download: If true, the dataset is downloaded if it does not already exist
-        """
-
         self.data_dir = data_dir
         self.lbls_per_class = lbls_per_class
         self.ulbls_per_class = ulbls_per_class

@@ -156,9 +156,6 @@ class Cifar10(Cifar):
         eval_per_class (int, optional):
             The number of observations per class to use in the evaluation set. If unspecified, the entire
             evaluation set is used. By default unspecified. Expects an integer > 0
-        img_size (int):
-            The image size of the dataset. Defaults to the 28x28 version of the dataset.
-            Specify 64, 128 or 224 for MedMNIST+ datasets.
         seed (int, optional):
             The seed for randomly choosing the labelled instances
         crop_size (int):
@@ -233,9 +230,6 @@ class Cifar100(Cifar):
         eval_per_class (int, optional):
             The number of observations per class to use in the evaluation set. If unspecified, the entire
             evaluation set is used. By default unspecified. Expects an integer > 0
-        img_size (int):
-            The image size of the dataset. Defaults to the 28x28 version of the dataset.
-            Specify 64, 128 or 224 for MedMNIST+ datasets.
         seed (int, optional):
             The seed for randomly choosing the labelled instances
         crop_size (int):
