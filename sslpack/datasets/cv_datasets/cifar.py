@@ -7,6 +7,8 @@ from sslpack.datasets import SSLDataset
 from sslpack.utils.data import TransformDataset, BasicDataset, split_lb_ulb_balanced
 from sslpack.utils.augmentation import RandAugment
 
+from typing import Optional
+
 
 class Cifar(SSLDataset):
 
@@ -130,43 +132,65 @@ class Cifar(SSLDataset):
 
 class Cifar10(Cifar):
     """
-    A Cifar10 semi supervised learning dataset with transformations.
+    CIFAR10 is an image classification dataset.
 
+    There are 60000 total examples with 10 classes, and all features are normalised.
+
+    The train/test split is 50000/10000
+    The training data is split into labelled and unlabelled parts.
+
+    Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
+    Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
+
+    Args:
+        data_dir (str):
+            The directory where the data is saved, or where it will be saved to if download=True
+        lbls_per_class (int):
+            The number of labelled observations to include per class. Expects a positive integer > 0
+        ulbls_per_class (int, optional):
+            The number of unlabelled observations to include per class. If unspecified, all
+            remaining examples after selecting the labelled examples are used. By default unspecified.
+        val_per_class (int, optional):
+            The number of observations per class to use in the validation set. If unspecified, the entire
+            validation set is used. By default unspecified. Expects an integer > 0
+        eval_per_class (int, optional):
+            The number of observations per class to use in the evaluation set. If unspecified, the entire
+            evaluation set is used. By default unspecified. Expects an integer > 0
+        img_size (int):
+            The image size of the dataset. Defaults to the 28x28 version of the dataset.
+            Specify 64, 128 or 224 for MedMNIST+ datasets.
+        seed (int, optional):
+            The seed for randomly choosing the labelled instances
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        return_ulbl_labels (bool):
+            If True, the labels for the unlabelled data are included. Defaults to False.
+        return_idx (bool):
+            If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        val_size (float):
+            The proportion of the training data to use as the validation set. Defaults to 1/5
+        download (bool):
+            If True, the dataset is downloaded if it does not already exist in the specified directory.
+            If False, an error will occur unless the dataset already exists. Defaults to False.
     """
 
     def __init__(
         self,
-        data_dir,
-        lbls_per_class=4,
-        ulbls_per_class=None,
-        return_ulbl_labels=False,
-        return_idx=False,
-        seed=None,
-        crop_size=32,
-        crop_ratio=1,
-        val_size=1/6,
-        download=False,
+        data_dir:str,
+        lbls_per_class:int=4,
+        ulbls_per_class:Optional[int]=None,
+        return_ulbl_labels:bool=False,
+        return_idx:bool=False,
+        seed:Optional[int]=None,
+        crop_size:int=32,
+        crop_ratio:float=1,
+        val_size:float=1/5,
+        download:bool=False,
     ):
         """
-        Initialise a CIFAR100 SSL dataset.  Contains a labelled, unlabelled and evaluation dataset. All features are normalised.
-
-        Elements from the datasets are return as dictionaries with keys
-            "X": The original features as a tensor
-            "weak": The weak augmentation applied to the features
-            "strong": The strong augmentation applied to the features
-            "y": The labels, if applicable
-            "idx": The dataset index, if enabled.
-
-        Args:
-            data_dir: The directory where the data is saved, or where it will be saved to if download=True
-            lbls_per_class: The number of labelled observations to include per class
-            ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
-            seed: The seed for randomly choosing the labelled instances
-            crop_size: The length/width of crop size for resizing (square) during augmentations
-            crop_ratio: The crop ratio used for padding when cropping during augmentations
-            return_ulb_labels: If true, the labels for the unlabelled data are included
-            return_idx: If true, the indices are returned when accessing a dataset
-            download: If true, the dataset is downloaded if it does not already exist
+        Initialise a CIFAR100 SSL dataset.
         """
         super().__init__(
             CIFAR10,
@@ -185,7 +209,48 @@ class Cifar10(Cifar):
 
 class Cifar100(Cifar):
     """
-    A Cifar100 semi supervised learning dataset with transformations
+    CIFAR100 is an image classification dataset.
+
+    There are 60000 total examples with 100 classes, and all features are normalised.
+
+    The train/test split is 50000/10000
+    The training data is split into labelled and unlabelled parts.
+
+    Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
+    Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
+
+    Args:
+        data_dir (str):
+            The directory where the data is saved, or where it will be saved to if download=True
+        lbls_per_class (int):
+            The number of labelled observations to include per class. Expects a positive integer > 0
+        ulbls_per_class (int, optional):
+            The number of unlabelled observations to include per class. If unspecified, all
+            remaining examples after selecting the labelled examples are used. By default unspecified.
+        val_per_class (int, optional):
+            The number of observations per class to use in the validation set. If unspecified, the entire
+            validation set is used. By default unspecified. Expects an integer > 0
+        eval_per_class (int, optional):
+            The number of observations per class to use in the evaluation set. If unspecified, the entire
+            evaluation set is used. By default unspecified. Expects an integer > 0
+        img_size (int):
+            The image size of the dataset. Defaults to the 28x28 version of the dataset.
+            Specify 64, 128 or 224 for MedMNIST+ datasets.
+        seed (int, optional):
+            The seed for randomly choosing the labelled instances
+        crop_size (int):
+            The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
+        crop_ratio (float):
+            The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        return_ulbl_labels (bool):
+            If True, the labels for the unlabelled data are included. Defaults to False.
+        return_idx (bool):
+            If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
+        val_size (float):
+            The proportion of the training data to use as the validation set. Defaults to 1/5
+        download (bool):
+            If True, the dataset is downloaded if it does not already exist in the specified directory.
+            If False, an error will occur unless the dataset already exists. Defaults to False.
     """
 
     def __init__(
@@ -203,25 +268,7 @@ class Cifar100(Cifar):
     ):
         """
 
-        Initialise a CIFAR100 SSL dataset.  Contains a labelled, unlabelled and evaluation dataset. All features are normalised.
-
-        Elements from the datasets are return as dictionaries with keys
-            "X": The original features as a tensor
-            "weak": The weak augmentation applied to the features
-            "strong": The strong augmentation applied to the features
-            "y": The labels, if applicable
-            "idx": The dataset index, if enabled.
-
-        Args:
-            data_dir: The directory where the data is saved, or where it will be saved to if download=True
-            lbls_per_class: The number of labelled observations to include per class
-            ulbls_per_class: The number of unlabelled observations to include per class. By default all remaining unlabelled observations are used
-            seed: The seed for randomly choosing the labelled instances
-            crop_size: The length/width of crop size for resizing (square) during augmentations
-            crop_ratio: The crop ratio used for padding when cropping during augmentations
-            return_ulb_labels: If true, the labels for the unlabelled data are included
-            return_idx: If true, the indices are returned when accessing a dataset
-            download: If true, the dataset is downloaded if it does not already exist
+        Initialise a CIFAR100 SSL dataset.
         """
         super().__init__(
             CIFAR100,
