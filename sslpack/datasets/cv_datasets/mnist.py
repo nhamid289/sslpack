@@ -1,12 +1,12 @@
 from sslpack.datasets import SSLDataset
 from torchvision.datasets import MNIST as MN
 import torch
-from torch.utils.data import random_split
 from torchvision import transforms
 from sslpack.utils.data import TransformDataset, BasicDataset
 from sslpack.utils.data import split_lb_ulb_balanced
 from sslpack.utils.augmentation import RandAugment
 
+from typing import Optional
 
 class Mnist(SSLDataset):
     """
@@ -43,18 +43,18 @@ class Mnist(SSLDataset):
 
     def __init__(
         self,
-        data_dir,
-        lbls_per_class,
-        ulbls_per_class=None,
-        val_per_class=None,
-        eval_per_class=None,
-        seed=None,
-        return_idx=False,
-        return_ulbl_labels=False,
-        crop_size=28,
-        crop_ratio=1,
-        val_size=1/6,
-        download=False,
+        data_dir:str,
+        lbls_per_class:int,
+        ulbls_per_class:Optional[int]=None,
+        val_per_class:Optional[int]=None,
+        eval_per_class:Optional[int]=None,
+        seed:Optional[int]=None,
+        return_idx:bool=False,
+        return_ulbl_labels:bool=False,
+        crop_size:int=28,
+        crop_ratio:float=1,
+        val_size:float=1/6,
+        download:bool=False,
     ):
         self.data_dir = data_dir
         self.lbls_per_class = lbls_per_class

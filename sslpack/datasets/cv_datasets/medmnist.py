@@ -6,6 +6,7 @@ from sslpack.utils.data import split_lb_ulb_balanced
 from sslpack.utils.augmentation import RandAugment
 
 import os
+from typing import Optional
 
 
 class MedMnist(SSLDataset):
@@ -216,18 +217,18 @@ class BloodMnist(MedMnist):
     """
     def __init__(
         self,
-        data_dir,
-        lbls_per_class,
-        ulbls_per_class=None,
-        val_per_class=None,
-        eval_per_class=None,
-        img_size=28,
-        seed=None,
-        return_idx=False,
-        return_ulbl_labels=False,
-        crop_size=28,
-        crop_ratio=1,
-        download=True,
+        data_dir:str,
+        lbls_per_class:int,
+        ulbls_per_class:Optional[int]=None,
+        val_per_class:Optional[int]=None,
+        eval_per_class:Optional[int]=None,
+        img_size:int=28,
+        seed:Optional[int]=None,
+        return_idx:bool=False,
+        return_ulbl_labels:bool=False,
+        crop_size:int=28,
+        crop_ratio:float=1,
+        download:bool=True,
     ):
         self._check_import()
         from medmnist import BloodMNIST
@@ -296,18 +297,18 @@ class PathMnist(MedMnist):
 
     def __init__(
         self,
-        data_dir,
-        lbls_per_class,
-        ulbls_per_class=None,
-        val_per_class=None,
-        eval_per_class=None,
-        img_size=28,
-        seed=None,
-        return_idx=False,
-        return_ulbl_labels=False,
-        crop_size=28,
-        crop_ratio=1,
-        download=True,
+        data_dir:str,
+        lbls_per_class:int,
+        ulbls_per_class:Optional[int]=None,
+        val_per_class:Optional[int]=None,
+        eval_per_class:Optional[int]=None,
+        img_size:int=28,
+        seed:Optional[int]=None,
+        return_idx:bool=False,
+        return_ulbl_labels:bool=False,
+        crop_size:int=28,
+        crop_ratio:float=1,
+        download:bool=True,
     ):
 
         self._check_import()
@@ -376,18 +377,18 @@ class ChestMnist(MedMnist):
     """
     def __init__(
         self,
-        data_dir,
-        lbls_per_class,
-        ulbls_per_class=None,
-        val_per_class=None,
-        eval_per_class=None,
-        img_size=28,
-        seed=None,
-        return_idx=False,
-        return_ulbl_labels=False,
-        crop_size=28,
-        crop_ratio=1,
-        download=True,
+        data_dir:str,
+        lbls_per_class:int,
+        ulbls_per_class:Optional[int]=None,
+        val_per_class:Optional[int]=None,
+        eval_per_class:Optional[int]=None,
+        img_size:int=28,
+        seed:Optional[int]=None,
+        return_idx:bool=False,
+        return_ulbl_labels:bool=False,
+        crop_size:int=28,
+        crop_ratio:float=1,
+        download:bool=True,
     ):
         self._check_import()
         from medmnist import ChestMNIST
@@ -455,18 +456,18 @@ class DermaMnist(MedMnist):
     """
     def __init__(
         self,
-        data_dir,
-        lbls_per_class,
-        ulbls_per_class=None,
-        val_per_class=None,
-        eval_per_class=None,
-        img_size=28,
-        seed=None,
-        return_idx=False,
-        return_ulbl_labels=False,
-        crop_size=28,
-        crop_ratio=1,
-        download=True,
+        data_dir:str,
+        lbls_per_class:int,
+        ulbls_per_class:Optional[int]=None,
+        val_per_class:Optional[int]=None,
+        eval_per_class:Optional[int]=None,
+        img_size:int=28,
+        seed:Optional[int]=None,
+        return_idx:bool=False,
+        return_ulbl_labels:bool=False,
+        crop_size:int=28,
+        crop_ratio:float=1,
+        download:bool=True,
     ):
         self._check_import()
         from medmnist import DermaMNIST
@@ -534,18 +535,18 @@ class BreastMnist(MedMnist):
     """
     def __init__(
         self,
-        data_dir,
-        lbls_per_class,
-        ulbls_per_class=None,
-        val_per_class=None,
-        eval_per_class=None,
-        img_size=28,
-        seed=None,
-        return_idx=False,
-        return_ulbl_labels=False,
-        crop_size=28,
-        crop_ratio=1,
-        download=True,
+        data_dir:str,
+        lbls_per_class:int,
+        ulbls_per_class:Optional[int]=None,
+        val_per_class:Optional[int]=None,
+        eval_per_class:Optional[int]=None,
+        img_size:int=28,
+        seed:Optional[int]=None,
+        return_idx:bool=False,
+        return_ulbl_labels:bool=False,
+        crop_size:int=28,
+        crop_ratio:float=1,
+        download:bool=True,
     ):
         self._check_import()
         from medmnist import BreastMNIST

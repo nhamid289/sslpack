@@ -176,7 +176,7 @@ class Cifar10(Cifar):
     def __init__(
         self,
         data_dir:str,
-        lbls_per_class:int=4,
+        lbls_per_class:int,
         ulbls_per_class:Optional[int]=None,
         return_ulbl_labels:bool=False,
         return_idx:bool=False,
@@ -249,16 +249,16 @@ class Cifar100(Cifar):
 
     def __init__(
         self,
-        data_dir,
-        lbls_per_class=4,
-        ulbls_per_class=None,
-        return_ulbl_labels=False,
-        return_idx=False,
-        seed=None,
-        crop_size=32,
-        crop_ratio=1,
-        val_size=1/5,
-        download=False,
+        data_dir:str,
+        lbls_per_class:int,
+        ulbls_per_class:Optional[int]=None,
+        return_ulbl_labels:bool=False,
+        return_idx:bool=False,
+        seed:Optional[int]=None,
+        crop_size:int=32,
+        crop_ratio:float=1,
+        val_size:float=1/5,
+        download:bool=False,
     ):
         """
 
