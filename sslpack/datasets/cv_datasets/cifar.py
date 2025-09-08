@@ -26,7 +26,7 @@ class Cifar(SSLDataset):
         download=True,
         return_ulbl_labels=False,
         return_idx=False,
-        val_size=1/5,
+        val_size=1 / 5,
     ):
 
         self.cifar = cifar
@@ -73,7 +73,7 @@ class Cifar(SSLDataset):
                     padding_mode="reflect",
                 ),
                 transforms.RandomHorizontalFlip(),
-                RandAugment(3, 5),
+                RandAugment(3),
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ]
@@ -82,7 +82,7 @@ class Cifar(SSLDataset):
     def _get_dataset(self, lbls_per_class, ulbls_per_class, seed, data_dir, download):
 
         train = self.cifar(data_dir, train=True, download=download)
-        num_val = int(self.val_size*len(train))
+        num_val = int(self.val_size * len(train))
         generator = None if seed is None else torch.Generator().manual_seed(seed)
         idx = torch.randperm(len(train), generator=generator)
         idx_val, idx_tr = idx[:num_val], idx[num_val:]
@@ -164,6 +164,8 @@ class Cifar10(Cifar):
 
     Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
     Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
+    Supports data augmentation. Weak transformations are random horizontal flips.
+    Strong transforms are done with `sslpack.utils.augmentation.RandAugment`
 
     Args:
         data_dir (str):
@@ -198,18 +200,18 @@ class Cifar10(Cifar):
 
     def __init__(
         self,
-        data_dir:str,
-        lbls_per_class:int,
-        ulbls_per_class:Optional[int]=None,
-        val_per_class:Optional[int]=None,
-        eval_per_class:Optional[int]=None,
-        return_ulbl_labels:bool=False,
-        return_idx:bool=False,
-        seed:Optional[int]=None,
-        crop_size:int=32,
-        crop_ratio:float=1,
-        val_size:float=1/5,
-        download:bool=False,
+        data_dir: str,
+        lbls_per_class: int,
+        ulbls_per_class: Optional[int] = None,
+        val_per_class: Optional[int] = None,
+        eval_per_class: Optional[int] = None,
+        return_ulbl_labels: bool = False,
+        return_idx: bool = False,
+        seed: Optional[int] = None,
+        crop_size: int = 32,
+        crop_ratio: float = 1,
+        val_size: float = 1 / 5,
+        download: bool = False,
     ):
         """
         Initialise a CIFAR100 SSL dataset.
@@ -227,7 +229,7 @@ class Cifar10(Cifar):
             download,
             return_ulbl_labels,
             return_idx,
-            val_size
+            val_size,
         )
 
 
@@ -242,6 +244,8 @@ class Cifar100(Cifar):
 
     Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
     Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
+    Supports data augmentation. Weak transformations are random horizontal flips.
+    Strong transforms are done with `sslpack.utils.augmentation.RandAugment`
 
     Args:
         data_dir (str):
@@ -276,18 +280,18 @@ class Cifar100(Cifar):
 
     def __init__(
         self,
-        data_dir:str,
-        lbls_per_class:int,
-        ulbls_per_class:Optional[int]=None,
-        val_per_class:Optional[int]=None,
-        eval_per_class:Optional[int]=None,
-        return_ulbl_labels:bool=False,
-        return_idx:bool=False,
-        seed:Optional[int]=None,
-        crop_size:int=32,
-        crop_ratio:float=1,
-        val_size:float=1/5,
-        download:bool=False,
+        data_dir: str,
+        lbls_per_class: int,
+        ulbls_per_class: Optional[int] = None,
+        val_per_class: Optional[int] = None,
+        eval_per_class: Optional[int] = None,
+        return_ulbl_labels: bool = False,
+        return_idx: bool = False,
+        seed: Optional[int] = None,
+        crop_size: int = 32,
+        crop_ratio: float = 1,
+        val_size: float = 1 / 5,
+        download: bool = False,
     ):
         """
 
@@ -306,5 +310,5 @@ class Cifar100(Cifar):
             download,
             return_ulbl_labels,
             return_idx,
-            val_size
+            val_size,
         )

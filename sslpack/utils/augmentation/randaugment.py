@@ -3,12 +3,9 @@
 # This code is modified version of one of ildoonet, for randaugmentation of fixmatch.
 
 import random
-
-import PIL, PIL.ImageOps, PIL.ImageEnhance, PIL.ImageDraw
+import PIL, PIL.ImageOps, PIL.ImageEnhance, PIL.ImageDraw, PIL.Image
 import numpy as np
-import torch
-import torch.nn.functional as F
-from PIL import Image
+from typing import Optional
 
 
 def AutoContrast(img, _):
@@ -95,8 +92,7 @@ def Cutout(img, v):
     return CutoutAbs(img, v)
 
 
-def CutoutAbs(img, v):  # [0, 60] => percentage: [0, 0.2]
-    # assert 0 <= v <= 20
+def CutoutAbs(img, v):
     if v < 0:
         return img
     w, h = img.size
@@ -110,68 +106,87 @@ def CutoutAbs(img, v):  # [0, 60] => percentage: [0, 0.2]
 
     xy = (x0, y0, x1, y1)
     color = (125, 123, 114)
-    # color = (0, 0, 0)
     img = img.copy()
     PIL.ImageDraw.Draw(img).rectangle(xy, color)
     return img
 
 
-def augment_list():
-    l = [
-        (AutoContrast, 0, 1),
-        (Brightness, 0.05, 0.95),
-        (Color, 0.05, 0.95),
-        (Contrast, 0.05, 0.95),
-        (Equalize, 0, 1),
-        (Identity, 0, 1),
-        (Posterize, 4, 8),
-        (Rotate, -30, 30),
-        (Sharpness, 0.05, 0.95),
-        (ShearX, -0.3, 0.3),
-        (ShearY, -0.3, 0.3),
-        (Solarize, 0, 256),
-        (TranslateX, -0.3, 0.3),
-        (TranslateY, -0.3, 0.3),
-    ]
-    return l
-
-
-def augment_list_no_color():
-    l = [
-        # (AutoContrast, 0, 1),
-        (Brightness, 0.05, 0.95),
-        # (Color, 0.05, 0.95),
-        # (Contrast, 0.05, 0.95),
-        (Equalize, 0, 1),
-        (Identity, 0, 1),
-        # (Posterize, 4, 8),
-        (Rotate, -30, 30),
-        (Sharpness, 0.05, 0.95),
-        (ShearX, -0.3, 0.3),
-        (ShearY, -0.3, 0.3),
-        # (Solarize, 0, 256),
-        (TranslateX, -0.3, 0.3),
-        (TranslateY, -0.3, 0.3),
-    ]
-    return l
-
-
 class RandAugment:
-    def __init__(self, n, m, exclude_color_aug=False, bw=False):
-        self.n = n
-        self.m = m
-        self.bw = bw
-        if not exclude_color_aug:
-            self.augment_list = augment_list()
-        else:
-            self.augment_list = augment_list_no_color()
+    """
+    RandAugment data augmentation technique as described in <https://arxiv.org/abs/1909.13719>
 
-    def __call__(self, img):
-        ops = random.choices(self.augment_list, k=self.n)
+    Args:
+        num_ops (int):
+            Number of augmentation transformations to apply sequentially. Expects a positive integer > 0. Defaults to 2.
+        magnitude (int, optional):
+            The magnitude for all the transformations. If unspecified, a magnitude is randomly chosen for each transformation. Expects an integer in [0, num_magnitude_bins-1] or None. Defaults to None.
+        num_magnitude_bins (int):
+            The number of discrete bins to use when choosing the magnitude for each transformation. Expects a positive integer > 1. Defaults to 31.
+        use_cutout (bool):
+            If True, Cutout is applied after the other augmentations. Defaults to False.
+    """
+    def __init__(self,
+                 num_ops:int=2,
+                 magnitude:Optional[int]=None,
+                 num_magnitude_bins:int=31,
+                 use_cutout:bool=False):
+
+        self.num_ops = num_ops
+        self.magnitude = magnitude
+        self.num_magnitude_bins = num_magnitude_bins
+        self.use_cutout = use_cutout
+
+        self.augments = [
+            # (augment, min magnitude, max magnitude, signed)
+            (Identity, 0, 1),
+            (AutoContrast, 0, 1),
+            (Brightness, 0.05, 0.95),
+            (Color, 0.05, 0.95),
+            (Contrast, 0.05, 0.95),
+            (Equalize, 0, 1),
+            (Posterize, 4, 8),
+            (Rotate, -30, 30),
+            (Sharpness, 0.05, 0.95),
+            (ShearX, -0.3, 0.3),
+            (ShearY, -0.3, 0.3),
+            (Solarize, 0, 255),
+            (TranslateX, -0.3, 0.3),
+            (TranslateY, -0.3, 0.3),
+        ]
+
+        self.bw_augments = [
+            (Brightness, 0.05, 0.95),
+            (Equalize, 0, 1),
+            (Identity, 0, 1),
+            (Rotate, -30, 30),
+            (Sharpness, 0.05, 0.95),
+            (ShearX, -0.3, 0.3),
+            (ShearY, -0.3, 0.3),
+            (TranslateX, -0.3, 0.3),
+            (TranslateY, -0.3, 0.3),
+        ]
+
+    def __call__(self, img:PIL.Image.Image):
+
+        if img.mode == "L":
+            augments = self.bw_augments
+        elif img.mode == "RGB":
+            augments = self.augments
+        else:
+            raise ValueError("Image mode should be either RGB or L.")
+        ops = random.choices(augments, k=self.num_ops)
+
         for op, min_val, max_val in ops:
-            val = min_val + float(max_val - min_val) * random.random()
+            if self.magnitude is None:
+                mag = np.random.randint(0, self.num_magnitude_bins)
+            else:
+                mag = self.magnitude
+
+            val = (float(mag) / float(self.num_magnitude_bins)) * float(max_val - min_val) + min_val
+
             img = op(img, val)
-        if self.bw is True:
+
+        if self.use_cutout is False:
             return img
 
         cutout_val = random.random() * 0.5

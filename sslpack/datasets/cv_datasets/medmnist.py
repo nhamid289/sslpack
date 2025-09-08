@@ -1,6 +1,8 @@
 from sslpack.datasets import SSLDataset
 import torch
 from torchvision import transforms
+
+# from torchvision.transforms import RandAugment
 from sslpack.utils.data import TransformDataset, BasicDataset
 from sslpack.utils.data import split_lb_ulb_balanced
 from sslpack.utils.augmentation import RandAugment
@@ -25,6 +27,8 @@ class MedMnist(SSLDataset):
         return_ulbl_labels=False,
         crop_size=28,
         crop_ratio=1,
+        num_augment=3,
+        mag_augment=5,
         download=False,
     ):
 
@@ -40,6 +44,8 @@ class MedMnist(SSLDataset):
         self.return_ulbl_labels = return_ulbl_labels
         self.crop_size = crop_size
         self.crop_ratio = crop_ratio
+        self.num_augment = num_augment
+        self.mag_augment = mag_augment
         self.download = download
 
         os.makedirs(data_dir, exist_ok=True)
@@ -59,9 +65,18 @@ class MedMnist(SSLDataset):
 
     def _preprocess_data(self):
 
-        tr = self.medmnist_class(root=self.data_dir, split="train", download=self.download, size=self.img_size)
-        ts = self.medmnist_class(root=self.data_dir, split="test", download=self.download, size=self.img_size)
-        val = self.medmnist_class(root=self.data_dir, split="val", download=self.download, size=self.img_size)
+        tr = self.medmnist_class(
+            root=self.data_dir,
+            split="train",
+            download=self.download,
+            size=self.img_size,
+        )
+        ts = self.medmnist_class(
+            root=self.data_dir, split="test", download=self.download, size=self.img_size
+        )
+        val = self.medmnist_class(
+            root=self.data_dir, split="val", download=self.download, size=self.img_size
+        )
 
         X_tr, y_tr = torch.tensor(tr.imgs).float() / 255, torch.tensor(tr.labels)
         X_ts, y_ts = torch.tensor(ts.imgs).float() / 255, torch.tensor(ts.labels)
@@ -101,7 +116,7 @@ class MedMnist(SSLDataset):
                     padding_mode="reflect",
                 ),
                 transforms.RandomHorizontalFlip(),
-                RandAugment(3, 5, exclude_color_aug=True, bw=True),
+                RandAugment(self.num_augment, self.mag_augment),
                 transforms.ToTensor(),
                 transforms.Normalize(self.X_mean, self.X_std),
             ]
@@ -172,6 +187,7 @@ class MedMnist(SSLDataset):
     def _permute(self, X):
         return X.permute(0, 3, 1, 2)
 
+
 class BloodMnist(MedMnist):
     """
     BloodMNIST is a blood cell medical imaging dataset for image classification.
@@ -183,6 +199,8 @@ class BloodMnist(MedMnist):
 
     Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
     Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
+    Supports data augmentation. Weak transformations are random horizontal flips.
+    Strong transforms are done with `sslpack.utils.augmentation.RandAugment`
 
     Args:
         data_dir (str):
@@ -211,24 +229,31 @@ class BloodMnist(MedMnist):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        num_augment (int):
+            The number of RandAugments to apply for strong augmentation. Expects a positive integer >= 0. Defaults to 3.
+        mag_augment (int):
+            The magnitude of RandAugments to apply for strong augmentation. Expects a positive integer > 0. Defaults to 5.
         download (bool):
             If True, the dataset is downloaded if it does not already exist in the specified directory.
             If False, an error will occur unless the dataset already exists. Defaults to False.
     """
+
     def __init__(
         self,
-        data_dir:str,
-        lbls_per_class:int,
-        ulbls_per_class:Optional[int]=None,
-        val_per_class:Optional[int]=None,
-        eval_per_class:Optional[int]=None,
-        img_size:int=28,
-        seed:Optional[int]=None,
-        return_idx:bool=False,
-        return_ulbl_labels:bool=False,
-        crop_size:int=28,
-        crop_ratio:float=1,
-        download:bool=True,
+        data_dir: str,
+        lbls_per_class: int,
+        ulbls_per_class: Optional[int] = None,
+        val_per_class: Optional[int] = None,
+        eval_per_class: Optional[int] = None,
+        img_size: int = 28,
+        seed: Optional[int] = None,
+        return_idx: bool = False,
+        return_ulbl_labels: bool = False,
+        crop_size: int = 28,
+        crop_ratio: float = 1,
+        num_augment: int = 3,
+        mag_augment: int = 5,
+        download: bool = True,
     ):
         self._check_import()
         from medmnist import BloodMNIST
@@ -246,6 +271,8 @@ class BloodMnist(MedMnist):
             return_ulbl_labels,
             crop_size,
             crop_ratio,
+            num_augment,
+            mag_augment,
             download,
         )
 
@@ -262,6 +289,8 @@ class PathMnist(MedMnist):
     Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
     Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
 
+    Supports data augmentation. Weak transformations are random horizontal flips.
+    Strong transforms are done with `sslpack.utils.augmentation.RandAugment`
 
     Args:
         data_dir (str):
@@ -290,6 +319,10 @@ class PathMnist(MedMnist):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        num_augment (int):
+            The number of RandAugments to apply for strong augmentation. Expects a positive integer >= 0. Defaults to 3.
+        mag_augment (int):
+            The magnitude of RandAugments to apply for strong augmentation. Expects a positive integer > 0. Defaults to 5.
         download (bool):
             If True, the dataset is downloaded if it does not already exist in the specified directory.
             If False, an error will occur unless the dataset already exists. Defaults to False.
@@ -297,18 +330,20 @@ class PathMnist(MedMnist):
 
     def __init__(
         self,
-        data_dir:str,
-        lbls_per_class:int,
-        ulbls_per_class:Optional[int]=None,
-        val_per_class:Optional[int]=None,
-        eval_per_class:Optional[int]=None,
-        img_size:int=28,
-        seed:Optional[int]=None,
-        return_idx:bool=False,
-        return_ulbl_labels:bool=False,
-        crop_size:int=28,
-        crop_ratio:float=1,
-        download:bool=True,
+        data_dir: str,
+        lbls_per_class: int,
+        ulbls_per_class: Optional[int] = None,
+        val_per_class: Optional[int] = None,
+        eval_per_class: Optional[int] = None,
+        img_size: int = 28,
+        seed: Optional[int] = None,
+        return_idx: bool = False,
+        return_ulbl_labels: bool = False,
+        crop_size: int = 28,
+        crop_ratio: float = 1,
+        num_augment: int = 3,
+        mag_augment: int = 5,
+        download: bool = True,
     ):
 
         self._check_import()
@@ -327,6 +362,8 @@ class PathMnist(MedMnist):
             return_ulbl_labels,
             crop_size,
             crop_ratio,
+            num_augment,
+            mag_augment,
             download,
         )
 
@@ -343,6 +380,8 @@ class ChestMnist(MedMnist):
     Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
     Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
 
+    Supports data augmentation. Weak transformations are random horizontal flips.
+    Strong transforms are done with `sslpack.utils.augmentation.RandAugment`
 
     Args:
         data_dir (str):
@@ -371,24 +410,31 @@ class ChestMnist(MedMnist):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        num_augment (int):
+            The number of RandAugments to apply for strong augmentation. Expects a positive integer >= 0. Defaults to 3.
+        mag_augment (int):
+            The magnitude of RandAugments to apply for strong augmentation. Expects a positive integer > 0. Defaults to 5.
         download (bool):
             If True, the dataset is downloaded if it does not already exist in the specified directory.
             If False, an error will occur unless the dataset already exists. Defaults to False.
     """
+
     def __init__(
         self,
-        data_dir:str,
-        lbls_per_class:int,
-        ulbls_per_class:Optional[int]=None,
-        val_per_class:Optional[int]=None,
-        eval_per_class:Optional[int]=None,
-        img_size:int=28,
-        seed:Optional[int]=None,
-        return_idx:bool=False,
-        return_ulbl_labels:bool=False,
-        crop_size:int=28,
-        crop_ratio:float=1,
-        download:bool=True,
+        data_dir: str,
+        lbls_per_class: int,
+        ulbls_per_class: Optional[int] = None,
+        val_per_class: Optional[int] = None,
+        eval_per_class: Optional[int] = None,
+        img_size: int = 28,
+        seed: Optional[int] = None,
+        return_idx: bool = False,
+        return_ulbl_labels: bool = False,
+        crop_size: int = 28,
+        crop_ratio: float = 1,
+        num_augment: int = 3,
+        mag_augment: int = 5,
+        download: bool = True,
     ):
         self._check_import()
         from medmnist import ChestMNIST
@@ -406,6 +452,8 @@ class ChestMnist(MedMnist):
             return_ulbl_labels,
             crop_size,
             crop_ratio,
+            num_augment,
+            mag_augment,
             download,
         )
 
@@ -422,6 +470,8 @@ class DermaMnist(MedMnist):
     Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
     Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
 
+    Supports data augmentation. Weak transformations are random horizontal flips.
+    Strong transforms are done with `sslpack.utils.augmentation.RandAugment`
 
     Args:
         data_dir (str):
@@ -450,24 +500,31 @@ class DermaMnist(MedMnist):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        num_augment (int):
+            The number of RandAugments to apply for strong augmentation. Expects a positive integer >= 0. Defaults to 3.
+        mag_augment (int):
+            The magnitude of RandAugments to apply for strong augmentation. Expects a positive integer > 0. Defaults to 5.
         download (bool):
             If True, the dataset is downloaded if it does not already exist in the specified directory.
             If False, an error will occur unless the dataset already exists. Defaults to False.
     """
+
     def __init__(
         self,
-        data_dir:str,
-        lbls_per_class:int,
-        ulbls_per_class:Optional[int]=None,
-        val_per_class:Optional[int]=None,
-        eval_per_class:Optional[int]=None,
-        img_size:int=28,
-        seed:Optional[int]=None,
-        return_idx:bool=False,
-        return_ulbl_labels:bool=False,
-        crop_size:int=28,
-        crop_ratio:float=1,
-        download:bool=True,
+        data_dir: str,
+        lbls_per_class: int,
+        ulbls_per_class: Optional[int] = None,
+        val_per_class: Optional[int] = None,
+        eval_per_class: Optional[int] = None,
+        img_size: int = 28,
+        seed: Optional[int] = None,
+        return_idx: bool = False,
+        return_ulbl_labels: bool = False,
+        crop_size: int = 28,
+        crop_ratio: float = 1,
+        num_augment: int = 3,
+        mag_augment: int = 5,
+        download: bool = True,
     ):
         self._check_import()
         from medmnist import DermaMNIST
@@ -485,6 +542,8 @@ class DermaMnist(MedMnist):
             return_ulbl_labels,
             crop_size,
             crop_ratio,
+            num_augment,
+            mag_augment,
             download,
         )
 
@@ -501,6 +560,8 @@ class BreastMnist(MedMnist):
     Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
     Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
 
+    Supports data augmentation. Weak transformations are random horizontal flips.
+    Strong transforms are done with `sslpack.utils.augmentation.RandAugment`
 
     Args:
         data_dir (str):
@@ -529,24 +590,31 @@ class BreastMnist(MedMnist):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
+        num_augment (int):
+            The number of RandAugments to apply for strong augmentation. Expects a positive integer >= 0. Defaults to 3.
+        mag_augment (int):
+            The magnitude of RandAugments to apply for strong augmentation. Expects a positive integer > 0. Defaults to 5.
         download (bool):
             If True, the dataset is downloaded if it does not already exist in the specified directory.
             If False, an error will occur unless the dataset already exists. Defaults to False.
     """
+
     def __init__(
         self,
-        data_dir:str,
-        lbls_per_class:int,
-        ulbls_per_class:Optional[int]=None,
-        val_per_class:Optional[int]=None,
-        eval_per_class:Optional[int]=None,
-        img_size:int=28,
-        seed:Optional[int]=None,
-        return_idx:bool=False,
-        return_ulbl_labels:bool=False,
-        crop_size:int=28,
-        crop_ratio:float=1,
-        download:bool=True,
+        data_dir: str,
+        lbls_per_class: int,
+        ulbls_per_class: Optional[int] = None,
+        val_per_class: Optional[int] = None,
+        eval_per_class: Optional[int] = None,
+        img_size: int = 28,
+        seed: Optional[int] = None,
+        return_idx: bool = False,
+        return_ulbl_labels: bool = False,
+        crop_size: int = 28,
+        crop_ratio: float = 1,
+        num_augment: int = 3,
+        mag_augment: int = 5,
+        download: bool = True,
     ):
         self._check_import()
         from medmnist import BreastMNIST
@@ -564,6 +632,8 @@ class BreastMnist(MedMnist):
             return_ulbl_labels,
             crop_size,
             crop_ratio,
+            num_augment,
+            mag_augment,
             download,
         )
 

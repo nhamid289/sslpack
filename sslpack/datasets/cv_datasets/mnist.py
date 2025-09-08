@@ -8,9 +8,15 @@ from sslpack.utils.augmentation import RandAugment
 
 from typing import Optional
 
+
 class Mnist(SSLDataset):
     """
     MNIST is a handwriting image classification dataset.
+
+    Contains an labelled and unlabelled set for training, a validation set and an evaluation set.
+    Elements from these datasets are returned as dictionaries. See `sslpack.datasets.SSLDataset`.
+    Supports data augmentation. Weak transformations are random horizontal flips.
+    Strong transforms are done with `sslpack.utils.augmentation.RandAugment`
 
     Args:
         data_dir (str):
@@ -43,18 +49,18 @@ class Mnist(SSLDataset):
 
     def __init__(
         self,
-        data_dir:str,
-        lbls_per_class:int,
-        ulbls_per_class:Optional[int]=None,
-        val_per_class:Optional[int]=None,
-        eval_per_class:Optional[int]=None,
-        seed:Optional[int]=None,
-        return_idx:bool=False,
-        return_ulbl_labels:bool=False,
-        crop_size:int=28,
-        crop_ratio:float=1,
-        val_size:float=1/6,
-        download:bool=False,
+        data_dir: str,
+        lbls_per_class: int,
+        ulbls_per_class: Optional[int] = None,
+        val_per_class: Optional[int] = None,
+        eval_per_class: Optional[int] = None,
+        seed: Optional[int] = None,
+        return_idx: bool = False,
+        return_ulbl_labels: bool = False,
+        crop_size: int = 28,
+        crop_ratio: float = 1,
+        val_size: float = 1 / 6,
+        download: bool = False,
     ):
         self.data_dir = data_dir
         self.lbls_per_class = lbls_per_class
@@ -69,7 +75,6 @@ class Mnist(SSLDataset):
         self.val_size = val_size
         self.download = download
 
-
         X_tr, y_tr, X_val, y_val, X_ts, y_ts = self._preprocess_data()
         self.X_mean, self.X_std = X_tr.mean(), X_tr.std()
         self._define_transforms()
@@ -79,12 +84,13 @@ class Mnist(SSLDataset):
         mnist_tr = MN(root=self.data_dir, train=True, download=self.download)
         mnist_ts = MN(root=self.data_dir, train=False, download=self.download)
 
-        num_val = int(self.val_size*len(mnist_tr))
+        num_val = int(self.val_size * len(mnist_tr))
         if self.seed is None:
             idx = torch.randperm(len(mnist_tr))
         else:
-            idx = torch.randperm(len(mnist_tr),
-                                 generator=torch.Generator().manual_seed(self.seed))
+            idx = torch.randperm(
+                len(mnist_tr), generator=torch.Generator().manual_seed(self.seed)
+            )
         idx_val, idx_tr = idx[:num_val], idx[num_val:]
 
         X, y = mnist_tr.data.float() / 255, mnist_tr.targets
@@ -121,7 +127,7 @@ class Mnist(SSLDataset):
                     padding_mode="reflect",
                 ),
                 transforms.RandomHorizontalFlip(),
-                RandAugment(3, 5, exclude_color_aug=True, bw=True),
+                RandAugment(3),  # apply 3 augmentations
                 transforms.ToTensor(),
                 transforms.Normalize(self.X_mean, self.X_std),
             ]

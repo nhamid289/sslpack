@@ -1,4 +1,3 @@
-
 class SSLDataset:
     """
     An interface to define SSL datasets.
