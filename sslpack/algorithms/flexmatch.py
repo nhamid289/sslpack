@@ -74,11 +74,12 @@ class FlexMatch(Algorithm):
         self.unsup_loss_func = cel if unsup_loss_func is None else unsup_loss_func
 
         # unusued is set to the n+1 class index, useful for bincount
-        self.UNUSED = num_classes + 1
+        self.UNUSED = num_classes
         # a vector tracking which unlabelled data have been used so far
         self.ulbl_preds = torch.ones((self.num_ulbl,), dtype=torch.long) * self.UNUSED
         # a vector tracking the number of predictions made for each class
-        self.class_counts = torch.bincount(self.ulbl_preds, minlength=self.UNUSED+1)
+        self.class_counts = torch.bincount(self.ulbl_preds, minlength=self.num_classes+1)
+        self.class_thresholds = self.flex_threshold()
 
         self.to(device)
 
@@ -147,6 +148,7 @@ class FlexMatch(Algorithm):
                 "pseudo_labels": pseudo_labels.detach().cpu(),
                 "mask": mask.detach().cpu(),
                 "class_count": self.class_counts,
+                "class_thresholds": self.class_thresholds
             })
 
         return total_loss
@@ -157,12 +159,12 @@ class FlexMatch(Algorithm):
         Compute the class-wise confidence thresholds
         """
         counts = self.class_counts # num_class element vector
-        if torch.argmax(counts) < counts[self.UNUSED] and self.use_warmup:
+        if torch.argmax(counts[:self.num_classes]) < counts[self.UNUSED] and self.use_warmup:
             # unused data dominate
-            beta = counts[:self.UNUSED] / torch.max(counts)
+            beta = counts[:self.num_classes] / torch.max(counts)
         else:
             # used data dominate
-            beta = counts[:self.UNUSED] / torch.max(counts[:self.UNUSED])
+            beta = counts[:self.num_classes] / torch.max(counts[:self.num_classes])
         return beta * self.conf_threshold
 
     @torch.no_grad()
@@ -171,9 +173,8 @@ class FlexMatch(Algorithm):
         Generate a flexmatch mask using classwise thresholds
         """
         confs, pseudo_labels = torch.max(probs, dim=1)
-        class_thresholds = self.flex_threshold()
         # get the threshold for each observation in the batch
-        threshold = class_thresholds[pseudo_labels]
+        threshold = self.class_thresholds[pseudo_labels]
         mask = confs.ge(threshold)
         return confs, pseudo_labels, mask
 
@@ -184,12 +185,15 @@ class FlexMatch(Algorithm):
         """
         select = confs.ge(self.conf_threshold)
         self.ulbl_preds[idxs[select == 1]] = pseudo_labels[select == 1]
-        self.class_counts = torch.bincount(self.ulbl_preds,minlength=self.UNUSED+1)
+        self.class_counts = torch.bincount(self.ulbl_preds,minlength=self.num_classes+1)
+        self.class_thresholds = self.flex_threshold()
 
     def to(self, device):
         self.class_counts = self.class_counts.to(device)
         self.ulbl_preds = self.ulbl_preds.to(device)
+        self.class_thresholds = self.class_thresholds.to(device)
 
     def reset(self):
         self.ulbl_preds = torch.ones((self.num_ulbl,), dtype=torch.long) * self.UNUSED
-        self.class_counts = torch.bincount(self.ulbl_preds, minlength=self.UNUSED+1)
+        self.class_counts = torch.bincount(self.ulbl_preds, minlength=self.num_classes+1)
+        self.class_thresholds = self.flex_threshold()
