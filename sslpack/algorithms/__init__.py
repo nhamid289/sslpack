@@ -6,4 +6,6 @@ from .pseudolabel import PseudoLabel
 
 from .flexmatch import FlexMatch
 
+from .freematch import FreeMatch
+
 from .supervised import Supervised, FullySupervised
