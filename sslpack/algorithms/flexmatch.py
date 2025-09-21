@@ -148,7 +148,7 @@ class FlexMatch(Algorithm):
                 "pseudo_labels": pseudo_labels.detach().cpu(),
                 "mask": mask.detach().cpu(),
                 "class_count": self.class_counts,
-                "class_thresholds": self.class_thresholds
+                "class_thresholds": self.class_thresholds.detach.cpu()
             })
 
         return total_loss

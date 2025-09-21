@@ -16,18 +16,14 @@ class FreeMatch(Algorithm):
     Args:
         num_classes (int):
             The number of classes. Expects positive integer > 0.
-        num_ulbl (int):
-            The number of unlabelled training examples. Expects positive integer > 0
         lambda_u (float, optional):
             The weight of the unlabelled loss in the total loss. Expects non-negative real >= 0. Defaults to 1.
         lambda_f (float, optional):
             The weight of the fairness loss in the total loss. Expects non-negative real >= 0. Defaults to 1.
-        conf_threshold (float, optional):
-            The default confidence threshold for pseudo-labels. Expects a float in [0, 1]. Defaults to 0.95
         threshold_decay (float, optional)
-            The threshold decay. Expects non-negative real >= 0. Defaults to 1.
-        use_warmup (bool, optional):
-            If true, use threshold warmup when most data remains unseen. Default False.
+            The exponential decay coefficient to use for threshold decay. Expects non-negative real in [0, 1]. Defaults to 0.999
+        clip_threshold (tuple[float, float], optional):
+            The (lower, upper) clip for the global threshold on each iteration. If None, no clipping is applied.
         concat (bool, optional):
             If True, the labelled and unlabelled batches are concatenated, and a single forward pass of the model is performed.
             If False, a separate forward pass is performed for each of the labelled and unlabelled batches.
@@ -154,6 +150,7 @@ class FreeMatch(Algorithm):
                 "confidences": confs_w.detach().cpu(),
                 "pseudo_labels": pseudo_labels_w.detach().cpu(),
                 "mask": mask.detach().cpu(),
+                "global_threshold": self.global_threshold,
                 "class_thresholds": self.class_thresholds.detach().cpu()
             })
 
