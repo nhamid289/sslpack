@@ -3,7 +3,7 @@ from torchvision.datasets import MNIST as MN
 import torch
 from torchvision import transforms
 from sslpack.utils.data import TransformDataset, BasicDataset
-from sslpack.utils.data import split_lbl_ulbl
+from sslpack.utils.data import stratify_lbl_ulbl
 from sslpack.utils.augmentation import RandAugment
 
 from typing import Optional
@@ -141,7 +141,7 @@ class Mnist(SSLDataset):
         )
 
     def _define_datasets(self, X_tr, y_tr, X_val, y_val, X_ts, y_ts):
-        X_tr_lb, y_tr_lb, X_tr_ulb, y_tr_ulb = split_lbl_ulbl(
+        X_tr_lb, y_tr_lb, X_tr_ulb, y_tr_ulb = stratify_lbl_ulbl(
             X=X_tr,
             y=y_tr,
             lbls_per_class=self.lbls_per_class,
@@ -172,7 +172,7 @@ class Mnist(SSLDataset):
 
         if self.val_per_class is not None:
             # using this function to obtain a small validation set with labels per class
-            X_val, y_val, _, _ = split_lbl_ulbl(
+            X_val, y_val, _, _ = stratify_lbl_ulbl(
                 X=X_val,
                 y=y_val,
                 lbls_per_class=self.val_per_class,
@@ -184,7 +184,7 @@ class Mnist(SSLDataset):
 
         if self.eval_per_class is not None:
             # using this function to obtain a small validation set with labels per class
-            X_ts, y_ts, _, _ = split_lbl_ulbl(
+            X_ts, y_ts, _, _ = stratify_lbl_ulbl(
                 X=X_ts,
                 y=y_ts,
                 lbls_per_class=self.eval_per_class,
