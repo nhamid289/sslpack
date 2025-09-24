@@ -17,8 +17,6 @@ class BasicDataset(Dataset):
             The transform to apply to the features X when accessed. If unspecified, no transform is applied.
         return_idx (bool):
             If true, the index of observations is available with key "idx". Defaults to False.
-        use_idx (arraylike, optional):
-            An alternative list of indexes to use. Useful for subsetting large datasets.
 
     Elements are returned as a dictionary with keys
     - "X": The features (after applying the transformation)
@@ -26,28 +24,22 @@ class BasicDataset(Dataset):
     - "idx": The data index (if return_idx=True)
 
     """
-    def __init__(self, X, y=None, transform=None, return_idx=False, use_idx=None):
+    def __init__(self, X, y=None, transform=None, return_idx=False):
         self.X = X
         self.y = y
         self.return_idx = return_idx
         self.transform = transform
-        self.use_udx = use_idx
 
     def __len__(self):
         """
         Return the number of elements in the dataset
         """
-        if self.use_idx is not None:
-            return len(self.use_idx)
         return len(self.X)
 
     def __getitem__(self, index):
         """
         Returns an item from the dataset
         """
-
-        if self.use_idx is not None:
-            index = self.use_idx[index]
 
         X = self.X[index]
         y = self.y[index] if self.y is not None else None
@@ -86,8 +78,6 @@ class TransformDataset(Dataset):
             If true, rather than a dictionary, outputs are returned in a tuple (X, X_weak, X_strong, y). Defaults to False.
         return_idx (bool):
             If true, the index of observations is available with key "idx". Defaults to False.
-        use_idx (arraylike, optional):
-            Provide an alternative set of indexes to use.
 
     Elements are returned as a dictionary with keys
     - "X": The features (after applying the transformation)
@@ -105,7 +95,6 @@ class TransformDataset(Dataset):
         strong_transform=None,
         return_X_y=False,
         return_idx=False,
-        use_idx=None,
     ):
         """
         Initialise a dataset. This can be either a labelled or unlabelled
@@ -131,7 +120,6 @@ class TransformDataset(Dataset):
         self.y = y
         self.return_X_y = return_X_y
         self.return_idx = return_idx
-        self.use_idx = use_idx
 
         self.transform = transform
         self.weak_transform = weak_transform
@@ -141,14 +129,9 @@ class TransformDataset(Dataset):
         """
         Return the number of elements in the dataset
         """
-        if self.use_idx is not None:
-            return len(self.use_idx)
         return len(self.X)
 
     def __getitem__(self, index):
-
-        if self.use_idx is not None:
-            index = self.use_idx[index]
 
         X = self.X[index]
         y = self.y[index] if self.y is not None else None
