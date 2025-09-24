@@ -4,7 +4,7 @@ from torchvision import transforms
 from PIL import Image
 
 from sslpack.datasets import SSLDataset
-from sslpack.utils.data import TransformDataset, BasicDataset, split_lb_ulb_balanced
+from sslpack.utils.data import TransformDataset, BasicDataset, split_lbl_ulbl
 from sslpack.utils.augmentation import RandAugment
 
 from typing import Optional
@@ -93,7 +93,7 @@ class Cifar(SSLDataset):
         X_tr = [Image.fromarray(x) for x in X_tr]
         X_val = [Image.fromarray(x) for x in X_val]
 
-        X_lb, y_lb, X_ulb, y_ulb = split_lb_ulb_balanced(
+        X_lb, y_lb, X_ulb, y_ulb = split_lbl_ulbl(
             X_tr,
             y_tr,
             lbls_per_class=lbls_per_class,
@@ -128,7 +128,7 @@ class Cifar(SSLDataset):
 
         if self.val_per_class is not None:
             # using this function to obtain a small validation set with labels per class
-            X_val, y_val, _, _ = split_lb_ulb_balanced(
+            X_val, y_val, _, _ = split_lbl_ulbl(
                 X=X_val,
                 y=y_val,
                 lbls_per_class=self.val_per_class,
@@ -145,7 +145,7 @@ class Cifar(SSLDataset):
 
         if self.eval_per_class is not None:
             # using this function to obtain a small validation set with labels per class
-            X_ts, y_ts, _, _ = split_lb_ulb_balanced(
+            X_ts, y_ts, _, _ = split_lbl_ulbl(
                 X=X_ts,
                 y=y_ts,
                 lbls_per_class=self.eval_per_class,

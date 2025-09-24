@@ -10,7 +10,7 @@ from torchvision.models import resnet18
 from tqdm import tqdm
 
 from sslpack.algorithms import FixMatch
-from sslpack.utils.data import BasicDataset, CyclicLoader, TransformDataset, split_lb_ulb_balanced
+from sslpack.utils.data import BasicDataset, CyclicLoader, TransformDataset, split_lbl_ulbl
 # from sslpack.utils.dist_align import DistributionAlignment
 from sslpack.algorithms.utils import DistributionAlignment
 
@@ -51,7 +51,7 @@ transform_val = transforms.Compose([
 
 #%% sslpack dataset objects
 num_labels_per_class = 10
-X_tr_lb, y_tr_lb, X_tr_ulb, y_tr_ulb = split_lb_ulb_balanced(X_tr, y_tr, num_labels_per_class)
+X_tr_lb, y_tr_lb, X_tr_ulb, y_tr_ulb = split_lbl_ulbl(X_tr, y_tr, num_labels_per_class)
 
 dataset_lb = TransformDataset(X_tr_lb, y_tr_lb, weak_transform=transform_weak, strong_transform=transform_strong)
 dataset_ulb = TransformDataset(X_tr_ulb, y_tr_ulb, weak_transform=transform_weak, strong_transform=transform_strong)
@@ -68,7 +68,7 @@ test_loader = DataLoader(dataset_val, batch_size=batch_size_eval)
 class CNN(nn.Module):
     def __init__(self, num_classes=10):
         super(CNN, self).__init__()
-        
+
         self.features = nn.Sequential(
             nn.Conv2d(1, 16, kernel_size=3, padding=1),
             nn.ReLU(),
@@ -87,7 +87,7 @@ class CNN(nn.Module):
         x = self.features(x)
         if only_features:
             return x
-        
+
         return self.classifier(x)
 
 # model = CNN()
@@ -133,12 +133,12 @@ def train(model, train_loader, algorithm, optimizer, scheduler=None, num_iters=1
 algorithm = FixMatch(dist_align=DistributionAlignment())
 
 train(
-    model=model, 
-    train_loader=train_loader, 
+    model=model,
+    train_loader=train_loader,
     algorithm=algorithm,
-    optimizer=optimizer, 
+    optimizer=optimizer,
     scheduler=scheduler,
-    device=device, 
+    device=device,
     num_iters=num_train_iters,
     num_log_iters=int(num_train_iters/10),
 )

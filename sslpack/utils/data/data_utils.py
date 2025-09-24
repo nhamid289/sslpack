@@ -1,14 +1,14 @@
 import numpy as np
 
 
-def split_lb_ulb_balanced(
-    X,
-    y,
-    lbls_per_class,
-    ulbls_per_class=None,
-    return_idx=False,
-    seed=None,
-):
+def split_lbl_ulbl(
+        X,
+        y,
+        lbls_per_class,
+        ulbls_per_class=None,
+        return_idx=False,
+        seed=None,
+    ):
     """
     A function to split features and labels into separate labelled and
     unlabelled sets.
@@ -56,3 +56,5 @@ def split_lb_ulb_balanced(
         [X[i] for i in ulbls],
         [y[i] for i in ulbls],
     )
+
+
