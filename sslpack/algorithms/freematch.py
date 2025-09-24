@@ -44,7 +44,7 @@ class FreeMatch(Algorithm):
     def __init__(self,
                  num_classes:int,
                  lambda_u:float=1,
-                 lambda_f:float=1,
+                 lambda_f:float=0.01,
                  threshold_decay:float=0.999,
                  clip_threshold:Optional[tuple[float, float]]=(0.0, 0.95),
                  concat:bool=True,
@@ -137,7 +137,10 @@ class FreeMatch(Algorithm):
 
         sup_loss = self.sup_loss_func(o_lbl_w, lbl_batch["y"])
         unsup_loss = self.unsup_loss_func(o_ulbl_s, pseudo_labels_w, mask)
-        fairness_loss = self._fairness_loss(o_ulbl_s, mask)
+        if mask.sum() == 0:
+            fairness_loss = 0.0
+        else:
+            fairness_loss = self._fairness_loss(o_ulbl_s, mask)
 
         total_loss = sup_loss + self.lambda_u * unsup_loss + self.lambda_f * fairness_loss
 
@@ -150,7 +153,7 @@ class FreeMatch(Algorithm):
                 "confidences": confs_w.detach().cpu(),
                 "pseudo_labels": pseudo_labels_w.detach().cpu(),
                 "mask": mask.detach().cpu(),
-                "global_threshold": self.global_threshold,
+                "global_threshold": self.global_threshold.item(),
                 "class_thresholds": self.class_thresholds.detach().cpu()
             })
 
@@ -177,7 +180,7 @@ class FreeMatch(Algorithm):
         preds = torch.bincount(pseudos.reshape(-1), minlength=self.class_probs.shape[0])
 
         self.pred_hist = self._update_ema(self.pred_hist, preds)
-        self.class_thresholds = self.class_probs / torch.max(self.class_probs, dim=-1)[0]
+        self.class_thresholds = (self.class_probs / torch.max(self.class_probs, dim=-1)[0]) * self.global_threshold
 
     def _replace_inf_to_zero(self, val):
         val[val == float('inf')] = 0.0
@@ -186,26 +189,25 @@ class FreeMatch(Algorithm):
     def _fairness_loss(self, o_ulbl_s, mask):
 
         probs_ulbl_s = o_ulbl_s.softmax(dim=1)
-        class_probs_s = (probs_ulbl_s[mask]).mean(dim=0)
-        confs_s, pseudos_s = torch.max(probs_ulbl_s, dim=1)
-        pseudos_s = pseudos_s[mask]
+        class_probs_s = (probs_ulbl_s * mask.unsqueeze(1)).mean(dim=0, keepdim=True)
+
+        _, pseudos_s = torch.max(probs_ulbl_s, dim=1)
         preds_s = torch.bincount(pseudos_s, minlength=o_ulbl_s.shape[1])
         class_hist_s = preds_s / preds_s.sum()
 
         # modulate prob model
-        class_probs_w, class_hist_w = self.class_probs.reshape(1, -1), self.pred_hist.reshape(1, -1)
-        prob_scaler_w = self._replace_inf_to_zero(1 / class_hist_w).detach()
+        class_probs_w, class_hist_w = self.class_probs.unsqueeze(0), self.pred_hist.unsqueeze(0)
+        prob_scaler_w = self._replace_inf_to_zero(1 / class_hist_w)
         mod_prob_w = class_probs_w * prob_scaler_w
         mod_prob_w = mod_prob_w / mod_prob_w.sum(dim=-1, keepdim=True)
 
         # modulate mean prob
-        prob_scaler_s = self._replace_inf_to_zero(1 / class_hist_s).detach()
-        mod_prob_s = class_probs_s.mean(dim=0, keepdim=True) * prob_scaler_s
+        prob_scaler_s = self._replace_inf_to_zero(1 / class_hist_s)
+        mod_prob_s = class_probs_s * prob_scaler_s
         mod_prob_s = mod_prob_s / mod_prob_s.sum(dim=-1, keepdim=True)
 
-        loss = mod_prob_w * torch.log(mod_prob_s + 1e-12)
-        loss = loss.sum(dim=1)
-        return loss.mean()
+        loss = ce(mod_prob_w, mod_prob_s)
+        return loss
 
     def to(self, device):
         self.class_probs = self.class_probs.to(device)

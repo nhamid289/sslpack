@@ -35,13 +35,15 @@ def split_lb_ulb_balanced(
     if seed is not None:
         np.random.seed(seed)
 
-    for label in np.unique(y):
+    for (i, label) in enumerate(np.unique(y)):
         idx = np.where(y == label)[0]
         np.random.shuffle(idx)
         # take the first lbls_per_class from shuffled indices
         lbls.extend(idx[:lbls_per_class])
         if ulbls_per_class is None:
             ulbls.extend(idx[lbls_per_class:])
+        elif isinstance(ulbls_per_class, list):
+            ulbls.extend(idx[lbls_per_class : lbls_per_class + ulbls_per_class[i]])
         else:
             ulbls.extend(idx[lbls_per_class : lbls_per_class + ulbls_per_class])
 
