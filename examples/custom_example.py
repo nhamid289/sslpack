@@ -23,21 +23,21 @@ X_tr, y_tr = train.data.unsqueeze(1)/255, train.targets
 X_ts, y_ts = test.data.unsqueeze(1)/255, test.targets
 
 #%% Define transforms
-crop_size = 28
+image_size = 28
 crop_ratio = 0.875  # 24.5/28
 
 transform_weak = transforms.Compose([
     transforms.ToPILImage(),
-    transforms.Resize(crop_size),
-    transforms.RandomCrop(crop_size, padding=int(crop_size * (1 - crop_ratio)), padding_mode='reflect'),
+    transforms.Resize(image_size),
+    transforms.RandomCrop(image_size, padding=int(image_size * (1 - crop_ratio)), padding_mode='reflect'),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
 ])
 
 transform_strong = transforms.Compose([
     transforms.ToPILImage(),
-    transforms.Resize(crop_size),
-    transforms.RandomCrop(crop_size, padding=int(crop_size * (1 - crop_ratio)), padding_mode='reflect'),
+    transforms.Resize(image_size),
+    transforms.RandomCrop(image_size, padding=int(image_size * (1 - crop_ratio)), padding_mode='reflect'),
     transforms.RandomHorizontalFlip(),
     transforms.RandAugment(3, 5),
     transforms.ToTensor(),
@@ -45,7 +45,7 @@ transform_strong = transforms.Compose([
 
 transform_val = transforms.Compose([
     transforms.ToPILImage(),
-    transforms.Resize(crop_size),
+    transforms.Resize(image_size),
     transforms.ToTensor(),
 ])
 

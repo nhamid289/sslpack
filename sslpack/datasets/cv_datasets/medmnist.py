@@ -25,7 +25,7 @@ class MedMnist(SSLDataset):
         seed=None,
         return_idx=False,
         return_ulbl_labels=False,
-        crop_size=28,
+        image_size=28,
         crop_ratio=1,
         num_augment=3,
         mag_augment=5,
@@ -42,7 +42,7 @@ class MedMnist(SSLDataset):
         self.img_size = img_size
         self.return_idx = return_idx
         self.return_ulbl_labels = return_ulbl_labels
-        self.crop_size = crop_size
+        self.image_size = image_size
         self.crop_ratio = crop_ratio
         self.num_augment = num_augment
         self.mag_augment = mag_augment
@@ -95,10 +95,10 @@ class MedMnist(SSLDataset):
         self.weak_transform = transforms.Compose(
             [
                 transforms.ToPILImage(),
-                transforms.Resize(self.crop_size),
+                transforms.Resize(self.image_size),
                 transforms.RandomCrop(
-                    self.crop_size,
-                    padding=int(self.crop_size * (1 - self.crop_ratio)),
+                    self.image_size,
+                    padding=int(self.image_size * (1 - self.crop_ratio)),
                     padding_mode="reflect",
                 ),
                 transforms.RandomHorizontalFlip(),
@@ -109,10 +109,10 @@ class MedMnist(SSLDataset):
         self.strong_transform = transforms.Compose(
             [
                 transforms.ToPILImage(),
-                transforms.Resize(self.crop_size),
+                transforms.Resize(self.image_size),
                 transforms.RandomCrop(
-                    self.crop_size,
-                    padding=int(self.crop_size * (1 - self.crop_ratio)),
+                    self.image_size,
+                    padding=int(self.image_size * (1 - self.crop_ratio)),
                     padding_mode="reflect",
                 ),
                 transforms.RandomHorizontalFlip(),
@@ -124,7 +124,7 @@ class MedMnist(SSLDataset):
 
         self.transform = transforms.Compose(
             [
-                transforms.Resize(self.crop_size),
+                transforms.Resize(self.image_size),
                 transforms.Normalize(self.X_mean, self.X_std),
             ]
         )
@@ -225,7 +225,7 @@ class BloodMnist(MedMnist):
             If True, the labels for the unlabelled data are included. Defaults to False.
         return_idx (bool):
             If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
-        crop_size (int):
+        image_size (int):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
@@ -249,7 +249,7 @@ class BloodMnist(MedMnist):
         seed: Optional[int] = None,
         return_idx: bool = False,
         return_ulbl_labels: bool = False,
-        crop_size: int = 28,
+        image_size: int = 28,
         crop_ratio: float = 1,
         num_augment: int = 3,
         mag_augment: int = 5,
@@ -269,7 +269,7 @@ class BloodMnist(MedMnist):
             seed,
             return_idx,
             return_ulbl_labels,
-            crop_size,
+            image_size,
             crop_ratio,
             num_augment,
             mag_augment,
@@ -315,7 +315,7 @@ class PathMnist(MedMnist):
             If True, the labels for the unlabelled data are included. Defaults to False.
         return_idx (bool):
             If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
-        crop_size (int):
+        image_size (int):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
@@ -339,7 +339,7 @@ class PathMnist(MedMnist):
         seed: Optional[int] = None,
         return_idx: bool = False,
         return_ulbl_labels: bool = False,
-        crop_size: int = 28,
+        image_size: int = 28,
         crop_ratio: float = 1,
         num_augment: int = 3,
         mag_augment: int = 5,
@@ -360,7 +360,7 @@ class PathMnist(MedMnist):
             seed,
             return_idx,
             return_ulbl_labels,
-            crop_size,
+            image_size,
             crop_ratio,
             num_augment,
             mag_augment,
@@ -406,7 +406,7 @@ class ChestMnist(MedMnist):
             If True, the labels for the unlabelled data are included. Defaults to False.
         return_idx (bool):
             If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
-        crop_size (int):
+        image_size (int):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
@@ -430,7 +430,7 @@ class ChestMnist(MedMnist):
         seed: Optional[int] = None,
         return_idx: bool = False,
         return_ulbl_labels: bool = False,
-        crop_size: int = 28,
+        image_size: int = 28,
         crop_ratio: float = 1,
         num_augment: int = 3,
         mag_augment: int = 5,
@@ -450,7 +450,7 @@ class ChestMnist(MedMnist):
             seed,
             return_idx,
             return_ulbl_labels,
-            crop_size,
+            image_size,
             crop_ratio,
             num_augment,
             mag_augment,
@@ -496,7 +496,7 @@ class DermaMnist(MedMnist):
             If True, the labels for the unlabelled data are included. Defaults to False.
         return_idx (bool):
             If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
-        crop_size (int):
+        image_size (int):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
@@ -520,7 +520,7 @@ class DermaMnist(MedMnist):
         seed: Optional[int] = None,
         return_idx: bool = False,
         return_ulbl_labels: bool = False,
-        crop_size: int = 28,
+        image_size: int = 28,
         crop_ratio: float = 1,
         num_augment: int = 3,
         mag_augment: int = 5,
@@ -540,7 +540,7 @@ class DermaMnist(MedMnist):
             seed,
             return_idx,
             return_ulbl_labels,
-            crop_size,
+            image_size,
             crop_ratio,
             num_augment,
             mag_augment,
@@ -586,7 +586,7 @@ class BreastMnist(MedMnist):
             If True, the labels for the unlabelled data are included. Defaults to False.
         return_idx (bool):
             If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
-        crop_size (int):
+        image_size (int):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
@@ -610,7 +610,7 @@ class BreastMnist(MedMnist):
         seed: Optional[int] = None,
         return_idx: bool = False,
         return_ulbl_labels: bool = False,
-        crop_size: int = 28,
+        image_size: int = 28,
         crop_ratio: float = 1,
         num_augment: int = 3,
         mag_augment: int = 5,
@@ -630,7 +630,7 @@ class BreastMnist(MedMnist):
             seed,
             return_idx,
             return_ulbl_labels,
-            crop_size,
+            image_size,
             crop_ratio,
             num_augment,
             mag_augment,

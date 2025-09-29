@@ -21,7 +21,7 @@ class Cifar(SSLDataset):
         val_per_class=None,
         eval_per_class=None,
         seed=None,
-        crop_size=32,
+        image_size=32,
         crop_ratio=1,
         download=True,
         return_ulbl_labels=False,
@@ -36,15 +36,15 @@ class Cifar(SSLDataset):
         self.val_per_class = val_per_class
         self.eval_per_class = eval_per_class
 
-        self._define_transforms(crop_size, crop_ratio)
+        self._define_transforms(image_size, crop_ratio)
 
         self._get_dataset(lbls_per_class, ulbls_per_class, seed, data_dir, download)
 
-    def _define_transforms(self, crop_size, crop_ratio):
+    def _define_transforms(self, image_size, crop_ratio):
 
         self.transform = transforms.Compose(
             [
-                transforms.Resize(crop_size),
+                transforms.Resize(image_size),
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ]
@@ -52,10 +52,10 @@ class Cifar(SSLDataset):
 
         self.weak_transform = transforms.Compose(
             [
-                transforms.Resize(crop_size),
+                transforms.Resize(image_size),
                 transforms.RandomCrop(
-                    crop_size,
-                    padding=int(crop_size * (1 - crop_ratio)),
+                    image_size,
+                    padding=int(image_size * (1 - crop_ratio)),
                     padding_mode="reflect",
                 ),
                 transforms.RandomHorizontalFlip(),
@@ -66,10 +66,10 @@ class Cifar(SSLDataset):
 
         self.strong_transform = transforms.Compose(
             [
-                transforms.Resize(crop_size),
+                transforms.Resize(image_size),
                 transforms.RandomCrop(
-                    crop_size,
-                    padding=int(crop_size * (1 - crop_ratio)),
+                    image_size,
+                    padding=int(image_size * (1 - crop_ratio)),
                     padding_mode="reflect",
                 ),
                 transforms.RandomHorizontalFlip(),
@@ -183,7 +183,7 @@ class Cifar10(Cifar):
             evaluation set is used. By default unspecified. Expects an integer > 0
         seed (int, optional):
             The seed for randomly choosing the labelled instances
-        crop_size (int):
+        image_size (int):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
@@ -208,7 +208,7 @@ class Cifar10(Cifar):
         return_ulbl_labels: bool = False,
         return_idx: bool = False,
         seed: Optional[int] = None,
-        crop_size: int = 32,
+        image_size: int = 32,
         crop_ratio: float = 1,
         val_size: float = 1 / 5,
         download: bool = False,
@@ -224,7 +224,7 @@ class Cifar10(Cifar):
             val_per_class,
             eval_per_class,
             seed,
-            crop_size,
+            image_size,
             crop_ratio,
             download,
             return_ulbl_labels,
@@ -263,7 +263,7 @@ class Cifar100(Cifar):
             evaluation set is used. By default unspecified. Expects an integer > 0
         seed (int, optional):
             The seed for randomly choosing the labelled instances
-        crop_size (int):
+        image_size (int):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
@@ -288,7 +288,7 @@ class Cifar100(Cifar):
         return_ulbl_labels: bool = False,
         return_idx: bool = False,
         seed: Optional[int] = None,
-        crop_size: int = 32,
+        image_size: int = 32,
         crop_ratio: float = 1,
         val_size: float = 1 / 5,
         download: bool = False,
@@ -305,7 +305,7 @@ class Cifar100(Cifar):
             val_per_class,
             eval_per_class,
             seed,
-            crop_size,
+            image_size,
             crop_ratio,
             download,
             return_ulbl_labels,

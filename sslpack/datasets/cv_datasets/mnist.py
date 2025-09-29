@@ -38,7 +38,7 @@ class Mnist(SSLDataset):
             If True, the labels for the unlabelled data are included. Defaults to False.
         return_idx (bool):
             If True, the indices are returned in the labelled and unlabelled datasets. Access them with key "idx". Defaults to False.
-        crop_size (int):
+        image_size (int):
             The length and width after cropping images during augmentations. Expects a positive integer > 0. Defaults to 28
         crop_ratio (float):
             The ratio used for padding when cropping during augmentations. Expects a float in [0,1]. Defaults to 0.875.
@@ -57,7 +57,7 @@ class Mnist(SSLDataset):
         seed: Optional[int] = None,
         return_idx: bool = False,
         return_ulbl_labels: bool = False,
-        crop_size: int = 28,
+        image_size: int = 28,
         crop_ratio: float = 1,
         val_size: float = 1 / 6,
         download: bool = False,
@@ -70,7 +70,7 @@ class Mnist(SSLDataset):
         self.seed = seed
         self.return_idx = return_idx
         self.return_ulbl_labels = return_ulbl_labels
-        self.crop_size = crop_size
+        self.image_size = image_size
         self.crop_ratio = crop_ratio
         self.val_size = val_size
         self.download = download
@@ -106,10 +106,10 @@ class Mnist(SSLDataset):
         self.weak_transform = transforms.Compose(
             [
                 transforms.ToPILImage(),
-                transforms.Resize(self.crop_size),
+                transforms.Resize(self.image_size),
                 transforms.RandomCrop(
-                    self.crop_size,
-                    padding=int(self.crop_size * (1 - self.crop_ratio)),
+                    self.image_size,
+                    padding=int(self.image_size * (1 - self.crop_ratio)),
                     padding_mode="reflect",
                 ),
                 transforms.RandomHorizontalFlip(),
@@ -120,10 +120,10 @@ class Mnist(SSLDataset):
         self.strong_transform = transforms.Compose(
             [
                 transforms.ToPILImage(),
-                transforms.Resize(self.crop_size),
+                transforms.Resize(self.image_size),
                 transforms.RandomCrop(
-                    self.crop_size,
-                    padding=int(self.crop_size * (1 - self.crop_ratio)),
+                    self.image_size,
+                    padding=int(self.image_size * (1 - self.crop_ratio)),
                     padding_mode="reflect",
                 ),
                 transforms.RandomHorizontalFlip(),
@@ -135,7 +135,7 @@ class Mnist(SSLDataset):
 
         self.transform = transforms.Compose(
             [
-                transforms.Resize(self.crop_size),
+                transforms.Resize(self.image_size),
                 transforms.Normalize(self.X_mean, self.X_std),
             ]
         )
