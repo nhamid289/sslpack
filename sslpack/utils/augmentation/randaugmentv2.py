@@ -57,7 +57,7 @@ def ShearY(img, v):
 
 
 def TranslateX(img, v):
-    width = F.get_image_size(img)[1]
+    width = F.get_size(img)[0]
     v = int(v * width)
     return F.affine(img, angle=0, translate=[v, 0], scale=1.0, shear=[0.0, 0.0])
 
@@ -67,7 +67,7 @@ def TranslateXabs(img, v):
 
 
 def TranslateY(img, v):
-    height = F.get_image_size(img)[0]
+    height = F.get_size(img)[1]
     v = int(v * height)
     return F.affine(img, angle=0, translate=[0, v], scale=1.0, shear=[0.0, 0.0])
 
@@ -84,7 +84,7 @@ def Solarize(img, v):
 def Cutout(img, v):
     if v <= 0.0:
         return img
-    h, w = F.get_image_size(img)
+    w, _ = F.get_size(img)
     v = int(v * w)
     return CutoutAbs(img, v)
 
@@ -93,7 +93,7 @@ def CutoutAbs(img, v):
     if v <= 0:
         return img
 
-    h, w = F.get_image_size(img)
+    w, h = F.get_size(img)
     x0 = int(np.random.uniform(0, w))
     y0 = int(np.random.uniform(0, h))
     x0 = max(0, x0 - v // 2)
