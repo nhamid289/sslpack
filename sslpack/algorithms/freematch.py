@@ -207,7 +207,7 @@ class FreeMatch(Algorithm):
         mod_prob_s = mod_prob_s / mod_prob_s.sum(dim=-1, keepdim=True)
 
         loss = ce(mod_prob_w, mod_prob_s)
-        return loss
+        return -loss
 
     def to(self, device):
         self.class_probs = self.class_probs.to(device)
