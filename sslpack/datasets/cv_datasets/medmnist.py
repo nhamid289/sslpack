@@ -50,7 +50,7 @@ class MedMnist(SSLDataset):
 
         os.makedirs(data_dir, exist_ok=True)
         X_tr, y_tr, X_val, y_val, X_ts, y_ts = self._preprocess_data()
-        self.X_mean, self.X_std = X_tr.mean(), X_tr.std()
+        self.X_mean, self.X_std = X_tr.mean(dim=(0,2,3)), X_tr.std(dim=(0,2,3))
         self._define_transforms()
         self._define_datasets(X_tr, y_tr, X_val, y_val, X_ts, y_ts)
 
