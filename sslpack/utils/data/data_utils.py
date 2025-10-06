@@ -45,15 +45,17 @@ def stratify_lbl_ulbl(
         # take the first lbls_per_class from shuffled indices
         if isinstance(lbls_per_class, list):
             lbls.extend(idx[:lbls_per_class[i]])
+            num_lbl = lbls_per_class[i]
         else:
             lbls.extend(idx[:lbls_per_class])
+            num_lbl = lbls_per_class
 
         if ulbls_per_class is None:
-            ulbls.extend(idx[lbls_per_class:])
+            ulbls.extend(idx[num_lbl:])
         elif isinstance(ulbls_per_class, list):
-            ulbls.extend(idx[lbls_per_class : lbls_per_class + ulbls_per_class[i]])
+            ulbls.extend(idx[num_lbl : num_lbl + ulbls_per_class[i]])
         else:
-            ulbls.extend(idx[lbls_per_class : lbls_per_class + ulbls_per_class])
+            ulbls.extend(idx[num_lbl : num_lbl + ulbls_per_class])
 
     return (
         [X[i] for i in lbls],
@@ -103,14 +105,16 @@ def stratify_lbl_ulbl_idx(
         # take the first lbls_per_class from shuffled indices
         if isinstance(lbls_per_class, list):
             lbls.extend(idx[:lbls_per_class[i]])
+            num_lbl = lbls_per_class[i]
         else:
             lbls.extend(idx[:lbls_per_class])
+            num_lbl = lbls_per_class
 
         if ulbls_per_class is None:
-            ulbls.extend(idx[lbls_per_class:])
+            ulbls.extend(idx[num_lbl:])
         elif isinstance(ulbls_per_class, list):
-            ulbls.extend(idx[lbls_per_class : lbls_per_class + ulbls_per_class[i]])
+            ulbls.extend(idx[num_lbl : num_lbl + ulbls_per_class[i]])
         else:
-            ulbls.extend(idx[lbls_per_class : lbls_per_class + ulbls_per_class])
+            ulbls.extend(idx[num_lbl : num_lbl + ulbls_per_class])
 
     return lbls, ulbls
