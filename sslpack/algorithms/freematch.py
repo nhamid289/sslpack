@@ -138,7 +138,7 @@ class FreeMatch(Algorithm):
         sup_loss = self.sup_loss_func(o_lbl_w, lbl_batch["y"])
         unsup_loss = self.unsup_loss_func(o_ulbl_s, pseudo_labels_w, mask)
         if mask.sum() == 0:
-            fairness_loss = 0.0
+            fairness_loss = torch.tensor(0.0)
         else:
             fairness_loss = self._fairness_loss(o_ulbl_s, mask)
 
