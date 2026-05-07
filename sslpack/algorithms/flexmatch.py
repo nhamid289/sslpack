@@ -72,13 +72,9 @@ class FlexMatch(Algorithm):
 
         # UNUSED is set to the n+1 class index, useful for bincount
         self.UNUSED = num_classes
-        self.ulbl_preds = torch.ones((self.num_ulbl,), dtype=torch.long) * self.UNUSED
-        self.class_counts = torch.bincount(self.ulbl_preds, minlength=self.num_classes+1)
-        self.class_thresholds = self.flex_threshold()
-
-        self.store_state('ulbl_preds')
-        self.store_state('class_counts')
-        self.store_state('class_thresholds')
+        self.store_state('ulbl_preds', torch.ones((self.num_ulbl,), dtype=torch.long) * self.UNUSED)
+        self.store_state('class_counts', torch.bincount(self.ulbl_preds, minlength=self.num_classes+1))
+        self.store_state('class_thresholds', self.flex_threshold())
 
     def _model_outputs(self, model, lbl_batch, ulbl_batch):
 

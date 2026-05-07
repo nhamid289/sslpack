@@ -70,15 +70,10 @@ class FreeMatch(Algorithm):
         self.sup_loss_func = ce if sup_loss_func is None else sup_loss_func
         self.unsup_loss_func = cel if unsup_loss_func is None else unsup_loss_func
 
-        self.global_threshold = torch.tensor(1.0 / self.num_classes)
-        self.class_probs = torch.ones(self.num_classes) / self.num_classes
-        self.pred_hist = torch.ones(self.num_classes) / self.num_classes
-        self.class_thresholds = self.class_probs / torch.max(self.class_probs, dim=-1)[0]
-
-        self.store_state('global_threshold')
-        self.store_state('class_probs')
-        self.store_state('pred_hist')
-        self.store_state('class_thresholds')
+        self.store_state('global_threshold', torch.tensor(1.0 / self.num_classes))
+        self.store_state('class_probs', torch.ones(self.num_classes) / self.num_classes)
+        self.store_state('pred_hist', torch.ones(self.num_classes) / self.num_classes)
+        self.store_state('class_thresholds', self.class_probs / torch.max(self.class_probs, dim=-1)[0])
 
     def _model_outputs(self, model, lbl_batch, ulbl_batch):
 
