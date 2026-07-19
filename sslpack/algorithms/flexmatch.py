@@ -5,8 +5,8 @@ from sslpack.algorithms import Algorithm
 from sslpack.algorithms.utils import DistributionAlignment
 from sslpack.utils.criterions import ce_consistency_loss as cel
 
-from torch import Tensor, device, nn
-from typing import Optional, Callable, Union
+from torch import Tensor, nn
+from typing import Optional, Callable
 
 class FlexMatch(Algorithm):
     """ An implementation of FlexMatch (http://arxiv.org/abs/2110.08263)
@@ -40,7 +40,6 @@ class FlexMatch(Algorithm):
         unsup_loss_func (Callable[[Tensor, Tensor, Tensor], Tensor], optional):
             a function with signature f(pred, true, mask) compute the loss on the unsupervised batch for only unmasked examples.
             Defaults to sslpack's masked cross entropy
-        device (Union[device, str]): The torch device on which to store the FlexMatch state vectors
         """
     def __init__(self,
                  num_classes:int,
@@ -52,8 +51,7 @@ class FlexMatch(Algorithm):
                  use_dist_align:bool=False,
                  dist_align:Optional[Callable[[Tensor, Tensor], Tensor]]=None,
                  sup_loss_func:Optional[Callable[[Tensor, Tensor], Tensor]]=None,
-                 unsup_loss_func:Optional[Callable[[Tensor, Tensor, Tensor], Tensor]]=None,
-                 device:Union[device, str]='cpu'):
+                 unsup_loss_func:Optional[Callable[[Tensor, Tensor, Tensor], Tensor]]=None):
 
         super().__init__()
 
@@ -68,20 +66,15 @@ class FlexMatch(Algorithm):
             self.dist_align = DistributionAlignment()
         else:
             self.dist_align = dist_align
-        self.device = device
 
         self.sup_loss_func = ce if sup_loss_func is None else sup_loss_func
         self.unsup_loss_func = cel if unsup_loss_func is None else unsup_loss_func
 
-        # unusued is set to the n+1 class index, useful for bincount
+        # UNUSED is set to the n+1 class index, useful for bincount
         self.UNUSED = num_classes
-        # a vector tracking which unlabelled data have been used so far
-        self.ulbl_preds = torch.ones((self.num_ulbl,), dtype=torch.long) * self.UNUSED
-        # a vector tracking the number of predictions made for each class
-        self.class_counts = torch.bincount(self.ulbl_preds, minlength=self.num_classes+1)
-        self.class_thresholds = self.flex_threshold()
-
-        self.to(device)
+        self.store_state('ulbl_preds', torch.ones((self.num_ulbl,), dtype=torch.long) * self.UNUSED)
+        self.store_state('class_counts', torch.bincount(self.ulbl_preds, minlength=self.num_classes+1))
+        self.store_state('class_thresholds', self.flex_threshold())
 
     def _model_outputs(self, model, lbl_batch, ulbl_batch):
 
@@ -188,12 +181,8 @@ class FlexMatch(Algorithm):
         self.class_counts = torch.bincount(self.ulbl_preds,minlength=self.num_classes+1)
         self.class_thresholds = self.flex_threshold()
 
-    def to(self, device):
-        self.class_counts = self.class_counts.to(device)
-        self.ulbl_preds = self.ulbl_preds.to(device)
-        self.class_thresholds = self.class_thresholds.to(device)
-
     def reset(self):
-        self.ulbl_preds = torch.ones((self.num_ulbl,), dtype=torch.long) * self.UNUSED
+        device = self.ulbl_preds.device
+        self.ulbl_preds = torch.ones((self.num_ulbl,), dtype=torch.long, device=device) * self.UNUSED
         self.class_counts = torch.bincount(self.ulbl_preds, minlength=self.num_classes+1)
         self.class_thresholds = self.flex_threshold()

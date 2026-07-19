@@ -55,19 +55,19 @@ class SSLDataLoader(DataLoader):
         """
         Length
         """
-        return NotImplementedError
+        raise NotImplementedError
 
     def __iter__(self):
         """
         Iterate
         """
-        return NotImplementedError
+        raise NotImplementedError
 
     def __next__(self):
         """
         Return the next labelled and unlabelled batch.
         """
-        return NotImplementedError
+        raise NotImplementedError
 
 
 class LabelledEpochLoader(SSLDataLoader):

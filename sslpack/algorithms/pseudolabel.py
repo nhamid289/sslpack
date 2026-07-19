@@ -53,6 +53,8 @@ class PseudoLabel(Algorithm):
         Initialise a PseudoLabel algorithm
         """
 
+        super().__init__()
+
         self.lambda_u = lambda_u
         self.conf_threshold = conf_threshold
         self.max_pseudo_labels = max_pseudo_labels
@@ -76,14 +78,14 @@ class PseudoLabel(Algorithm):
 
         Args:
             model: The predictor model
-            lbl_batch: A dictionary with labelled data using keys "X", "y"
-            ubl_batch: A dictionary with unlabelled data using keys "X", "y"
+            lbl_batch: A dictionary with labelled data using keys "weak", "y"
+            ubl_batch: A dictionary with unlabelled data using keys "weak"
             log_func: A function which accepts a dictionary containing some
                 training information
         """
 
-        x_lbl = lbl_batch["X"]
-        x_ulbl = ulbl_batch["X"]
+        x_lbl = lbl_batch["weak"]
+        x_ulbl = ulbl_batch["weak"]
 
         if self.concat is True:
             x = torch.concat([x_lbl, x_ulbl])

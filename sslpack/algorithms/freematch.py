@@ -5,8 +5,8 @@ from sslpack.algorithms import Algorithm
 from sslpack.algorithms.utils import DistributionAlignment
 from sslpack.utils.criterions import ce_consistency_loss as cel
 
-from torch import Tensor, device, nn
-from typing import Optional, Callable, Union
+from torch import Tensor, nn
+from typing import Optional, Callable
 
 class FreeMatch(Algorithm):
     """ An implementation of FlexMatch (https://arxiv.org/pdf/2205.07246)
@@ -39,7 +39,6 @@ class FreeMatch(Algorithm):
         unsup_loss_func (Callable[[Tensor, Tensor, Tensor], Tensor], optional):
             a function with signature f(pred, true, mask) compute the loss on the unsupervised batch for only unmasked examples.
             Defaults to sslpack's masked cross entropy
-        device (Union[device, str]): The torch device on which to store the FlexMatch state vectors
         """
     def __init__(self,
                  num_classes:int,
@@ -51,8 +50,7 @@ class FreeMatch(Algorithm):
                  use_dist_align:bool=False,
                  dist_align:Optional[Callable[[Tensor, Tensor], Tensor]]=None,
                  sup_loss_func:Optional[Callable[[Tensor, Tensor], Tensor]]=None,
-                 unsup_loss_func:Optional[Callable[[Tensor, Tensor, Tensor], Tensor]]=None,
-                 device:Union[device, str]='cpu'):
+                 unsup_loss_func:Optional[Callable[[Tensor, Tensor, Tensor], Tensor]]=None):
 
         super().__init__()
 
@@ -68,17 +66,14 @@ class FreeMatch(Algorithm):
             self.dist_align = DistributionAlignment()
         else:
             self.dist_align = dist_align
-        self.device = device
 
         self.sup_loss_func = ce if sup_loss_func is None else sup_loss_func
         self.unsup_loss_func = cel if unsup_loss_func is None else unsup_loss_func
 
-        self.global_threshold = 1 / self.num_classes
-        self.class_probs = torch.ones((self.num_classes)) / self.num_classes
-        self.pred_hist = torch.ones((self.num_classes)) / self.num_classes
-        self.class_thresholds = self.class_probs / torch.max(self.class_probs, dim=-1)[0]
-
-        self.to(device)
+        self.store_state('global_threshold', torch.tensor(1.0 / self.num_classes))
+        self.store_state('class_probs', torch.ones(self.num_classes) / self.num_classes)
+        self.store_state('pred_hist', torch.ones(self.num_classes) / self.num_classes)
+        self.store_state('class_thresholds', self.class_probs / torch.max(self.class_probs, dim=-1)[0])
 
     def _model_outputs(self, model, lbl_batch, ulbl_batch):
 
@@ -138,7 +133,7 @@ class FreeMatch(Algorithm):
         sup_loss = self.sup_loss_func(o_lbl_w, lbl_batch["y"])
         unsup_loss = self.unsup_loss_func(o_ulbl_s, pseudo_labels_w, mask)
         if mask.sum() == 0:
-            fairness_loss = torch.tensor(0.0)
+            fairness_loss = torch.tensor(0.0, device=o_ulbl_s.device)
         else:
             fairness_loss = self._fairness_loss(o_ulbl_s, mask)
 
@@ -209,14 +204,12 @@ class FreeMatch(Algorithm):
         loss = ce(mod_prob_w, mod_prob_s)
         return -loss
 
-    def to(self, device):
-        self.class_probs = self.class_probs.to(device)
-        self.pred_hist = self.pred_hist.to(device)
-
     def reset(self):
-        self.class_probs = torch.ones((self.num_classes)) / self.num_classes
-        self.pred_history = torch.ones((self.num_classes)) / self.num_classes
-        self.to(self.device)
+        device = self.class_probs.device
+        self.class_probs = torch.ones(self.num_classes, device=device) / self.num_classes
+        self.pred_hist = torch.ones(self.num_classes, device=device) / self.num_classes
+        self.global_threshold = torch.tensor(1.0 / self.num_classes, device=device)
+        self.class_thresholds = self.class_probs / torch.max(self.class_probs, dim=-1)[0]
 
 
 
