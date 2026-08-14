@@ -81,11 +81,10 @@ class FixMatch(Algorithm):
             o_ulbl_s = o[lbl_size + ulbl_size:]
         else:
             o_lbl_w = model(lbl_batch["weak"])
+            o_ulbl_w = model(ulbl_batch["weak"])
             o_ulbl_s = model(ulbl_batch["strong"])
-            with torch.no_grad():
-                o_ulbl_w = model(ulbl_batch["weak"])
 
-        return o_lbl_w, o_ulbl_w, o_ulbl_s
+        return o_lbl_w, o_ulbl_w.detach(), o_ulbl_s
 
 
     def forward(self,
