@@ -46,7 +46,7 @@ class FlexMatch(Algorithm):
                  num_ulbl:int,
                  lambda_u:float=1,
                  conf_threshold:float=0.95,
-                 use_warmup:bool=False,
+                 use_warmup:bool=True,
                  concat:bool=True,
                  use_dist_align:bool=False,
                  dist_align:Optional[Callable[[Tensor, Tensor], Tensor]]=None,
@@ -89,11 +89,10 @@ class FlexMatch(Algorithm):
             o_ulbl_s = o[lbl_size + ulbl_size:]
         else:
             o_lbl_w = model(lbl_batch["weak"])
+            o_ulbl_w = model(ulbl_batch["weak"])
             o_ulbl_s = model(ulbl_batch["strong"])
-            with torch.no_grad():
-                o_ulbl_w = model(ulbl_batch["weak"])
 
-        return o_lbl_w, o_ulbl_w, o_ulbl_s
+        return o_lbl_w, o_ulbl_w.detach(), o_ulbl_s
 
     def forward(self,
                 model:nn.Module,
@@ -152,13 +151,13 @@ class FlexMatch(Algorithm):
         Compute the class-wise confidence thresholds
         """
         counts = self.class_counts # num_class element vector
-        if torch.argmax(counts[:self.num_classes]) < counts[self.UNUSED] and self.use_warmup:
+        if torch.max(counts[:self.num_classes]) < counts[self.UNUSED] and self.use_warmup:
             # unused data dominate
             beta = counts[:self.num_classes] / torch.max(counts)
         else:
             # used data dominate
             beta = counts[:self.num_classes] / torch.max(counts[:self.num_classes])
-        return beta * self.conf_threshold
+        return (beta/(2-beta)) * self.conf_threshold
 
     @torch.no_grad()
     def flex_mask(self, probs):
