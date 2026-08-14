@@ -9,9 +9,9 @@ from torch import Tensor, nn
 from typing import Optional, Callable
 
 class FreeMatch(Algorithm):
-    """ An implementation of FlexMatch (https://arxiv.org/pdf/2205.07246)
+    """ An implementation of FreeMatch (https://arxiv.org/pdf/2205.07246)
 
-    FreeMatch uses pseudo-labelling and augmentation anchoring like FixMatch. Like FlexMatch, it uses an adaptative class-wise confidence threshold, but adds a class fairness penalty term to encourage diverse predictions during the early training stage.
+    FreeMatch uses pseudo-labelling and augmentation anchoring like FixMatch. Like FreeMatch, it uses an adaptative class-wise confidence threshold, but adds a class fairness penalty term to encourage diverse predictions during the early training stage.
 
     Args:
         num_classes (int):
@@ -19,11 +19,9 @@ class FreeMatch(Algorithm):
         lambda_u (float, optional):
             The weight of the unlabelled loss in the total loss. Expects non-negative real >= 0. Defaults to 1.
         lambda_f (float, optional):
-            The weight of the fairness loss in the total loss. Expects non-negative real >= 0. Defaults to 1.
-        threshold_decay (float, optional)
-            The exponential decay coefficient to use for threshold decay. Expects non-negative real in [0, 1]. Defaults to 0.999
-        clip_threshold (tuple[float, float], optional):
-            The (lower, upper) clip for the global threshold on each iteration. If None, no clipping is applied.
+            The weight of the fairness loss in the total loss. Expects non-negative real >= 0. Defaults to 0.01.
+        ema_momentum (float, optional)
+            The exponential moving average momentum. Expects non-negative real in [0, 1]. Defaults to 0.999
         concat (bool, optional):
             If True, the labelled and unlabelled batches are concatenated, and a single forward pass of the model is performed.
             If False, a separate forward pass is performed for each of the labelled and unlabelled batches.
@@ -44,8 +42,7 @@ class FreeMatch(Algorithm):
                  num_classes:int,
                  lambda_u:float=1,
                  lambda_f:float=0.01,
-                 threshold_decay:float=0.999,
-                 clip_threshold:Optional[tuple[float, float]]=(0.0, 0.95),
+                 ema_momentum:float=0.999,
                  concat:bool=True,
                  use_dist_align:bool=False,
                  dist_align:Optional[Callable[[Tensor, Tensor], Tensor]]=None,
@@ -58,8 +55,7 @@ class FreeMatch(Algorithm):
         self.num_classes = num_classes
         self.lambda_u = lambda_u
         self.lambda_f = lambda_f
-        self.threshold_decay = threshold_decay
-        self.clip_threshold = clip_threshold
+        self.ema_momentum = ema_momentum
         self.concat = concat
         self.use_dist_align = use_dist_align
         if dist_align is None:
@@ -88,11 +84,10 @@ class FreeMatch(Algorithm):
             o_ulbl_s = o[lbl_size + ulbl_size:]
         else:
             o_lbl_w = model(lbl_batch["weak"])
+            o_ulbl_w = model(ulbl_batch["weak"])
             o_ulbl_s = model(ulbl_batch["strong"])
-            with torch.no_grad():
-                o_ulbl_w = model(ulbl_batch["weak"])
 
-        return o_lbl_w, o_ulbl_w, o_ulbl_s
+        return o_lbl_w, o_ulbl_w.detach(), o_ulbl_s
 
     def forward(self,
                 model:nn.Module,
@@ -100,7 +95,7 @@ class FreeMatch(Algorithm):
                 ulbl_batch:dict,
                 log_func:Optional[Callable[[dict], None]]=None):
         """
-        Performs a forward pass of FlexMatch
+        Performs a forward pass of FreeMatch
 
         Args:
             model (nn.Module):
@@ -160,19 +155,17 @@ class FreeMatch(Algorithm):
         return mask
 
     def _update_ema(self, x, y):
-        return x * self.threshold_decay + (1 - self.threshold_decay) * y
+        return x * self.ema_momentum + (1 - self.ema_momentum) * y
 
     @torch.no_grad()
     def _update_thresholds(self, probs, confs, pseudos):
 
         self.global_threshold = self._update_ema(self.global_threshold, confs.mean())
 
-        if self.clip_threshold is not None:
-            self.global_threshold = torch.clip(self.global_threshold, self.clip_threshold[0], self.clip_threshold[1])
-
         self.class_probs = self._update_ema(self.class_probs, probs.mean(dim=0))
         # the count of predictions for each class
         preds = torch.bincount(pseudos.reshape(-1), minlength=self.class_probs.shape[0])
+        preds = preds / preds.sum()
 
         self.pred_hist = self._update_ema(self.pred_hist, preds)
         self.class_thresholds = (self.class_probs / torch.max(self.class_probs, dim=-1)[0]) * self.global_threshold
@@ -183,11 +176,11 @@ class FreeMatch(Algorithm):
 
     def _fairness_loss(self, o_ulbl_s, mask):
 
-        probs_ulbl_s = o_ulbl_s.softmax(dim=1)
-        class_probs_s = (probs_ulbl_s * mask.unsqueeze(1)).mean(dim=0, keepdim=True)
+        probs_ulbl_s = o_ulbl_s[mask].softmax(dim=1)
+        class_probs_s = probs_ulbl_s.mean(dim=0, keepdim=True)
 
         _, pseudos_s = torch.max(probs_ulbl_s, dim=1)
-        preds_s = torch.bincount(pseudos_s, minlength=o_ulbl_s.shape[1])
+        preds_s = torch.bincount(pseudos_s, minlength=probs_ulbl_s.shape[1])
         class_hist_s = preds_s / preds_s.sum()
 
         # modulate prob model
@@ -198,10 +191,10 @@ class FreeMatch(Algorithm):
 
         # modulate mean prob
         prob_scaler_s = self._replace_inf_to_zero(1 / class_hist_s)
-        mod_prob_s = class_probs_s * prob_scaler_s
+        mod_prob_s = class_probs_s * prob_scaler_s.detach()
         mod_prob_s = mod_prob_s / mod_prob_s.sum(dim=-1, keepdim=True)
 
-        loss = ce(mod_prob_w, mod_prob_s)
+        loss = ce(mod_prob_w.detach(), mod_prob_s)
         return -loss
 
     def reset(self):
