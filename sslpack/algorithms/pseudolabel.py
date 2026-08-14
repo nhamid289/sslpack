@@ -84,18 +84,16 @@ class PseudoLabel(Algorithm):
                 training information
         """
 
-        x_lbl = lbl_batch["weak"]
-        x_ulbl = ulbl_batch["weak"]
+        lbl_size = lbl_batch["weak"].size(0)
 
         if self.concat is True:
-            x = torch.concat([x_lbl, x_ulbl])
+            x = torch.concat([lbl_batch["weak"], ulbl_batch["weak"]])
             out = model(x)
-            out_lbl = out[:x_lbl.size(0)]
-            out_ulbl = out[x_lbl.size(0):]
+            out_lbl = out[:lbl_size]
+            out_ulbl = out[lbl_size:]
         else:
-            out_lbl = model(x_lbl)
-            with torch.no_grad():
-                out_ulbl = model(x_ulbl)
+            out_lbl = model(lbl_batch["weak"])
+            out_ulbl = model(ulbl_batch["weak"])
 
         probs_ulbl = torch.softmax(out_ulbl, dim=1)
         probs_lbl = torch.softmax(out_lbl, dim=1)
